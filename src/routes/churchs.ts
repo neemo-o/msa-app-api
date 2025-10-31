@@ -1,11 +1,12 @@
+// Imports
 import { Router, Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 
+// Configuration
 const prisma = new PrismaClient();
-
 const router = Router();
 
-// Listar todas as igrejas (apenas ativas)
+// Listar igrejas
 router.get("/", async (req: Request, res: Response) => {
   try {
     const churches = await prisma.church.findMany({

@@ -23,6 +23,8 @@ model User {
 
   // Relations
   church           Church?        @relation(fields: [churchId], references: [id])
+  entryRequests    EntryRequest[] @relation("UserEntryRequests")
+  approvedRequests EntryRequest[] @relation("ApprovedEntryRequests")
 
   @@map("users")
 }
@@ -40,9 +42,28 @@ model Church {
 
   // Relations
   users         User[]
+  entryRequests EntryRequest[]
 
   @@map("churches")
 }
+
+model EntryRequest {
+  id          String   @id @default(cuid())
+  userId      String
+  churchId    String
+  professorId String?
+  status      RequestStatus @default(EM_ANALISE)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user      User   @relation("UserEntryRequests", fields: [userId], references: [id])
+  church    Church @relation(fields: [churchId], references: [id])
+  professor User?  @relation("ApprovedEntryRequests", fields: [professorId], references: [id])
+
+  @@map("entry_requests")
+}
+
 
 // Enums
 enum UserRole {
@@ -51,3 +72,11 @@ enum UserRole {
   ENCARREGADO
   APRENDIZ
 }
+
+
+enum RequestStatus {
+  EM_ANALISE
+  APROVADO
+  REJEITADO
+}
+
