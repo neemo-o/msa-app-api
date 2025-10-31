@@ -11,12 +11,13 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@prisma/client": "^6.18.0",
+    "@types/express": "^5.0.5",
     "@types/node": "^24.9.2",
     "nodemon": "^3.1.10",
+    "prisma": "^6.18.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3",
-    "@types/express": "^5.0.5"
-     
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "dotenv": "^16.3.1",
