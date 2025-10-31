@@ -157,7 +157,7 @@ router.put('/:id', auth, async (req: AuthRequest, res: Response) => {
         if (email) updateData.email = email;
         if (password) updateData.password = await AuthService.hashPassword(password);
 
-        // Validar e converter role se fornecido
+       
         if (role) {
             if (role === 'ADMINISTRADOR') {
                 updateData.role = UserRole.ADMINISTRADOR;

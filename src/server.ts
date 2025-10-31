@@ -16,9 +16,20 @@ const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT;
 
+const allowedOrigins = process.env.CORS_ORIGIN?.split(",") || [];
+
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN,
+    origin: (origin, callback) => {
+      // Permite requisições de ferramentas locais (sem origem)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("CORS: Origin not allowed"));
+      }
+    },
     credentials: true,
   })
 );
