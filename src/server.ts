@@ -6,6 +6,7 @@ import { PrismaClient } from '@prisma/client';
 
 // Routes
 import userRoutes from "./routes/users";
+import churchRoutes from "./routes/churchs";
 
 // Configuration
 dotenv.config();
@@ -25,6 +26,7 @@ app.use(
 
 app.use(express.json({ limit: "10mb" }));
 app.use("/api/users", userRoutes);
+app.use("/api/churchs", churchRoutes);
 
 // Applcation
 async function startServer() {

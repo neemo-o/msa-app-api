@@ -1,63 +1,98 @@
-// Use a sintaxe de Módulos ES (import) já que seu servidor também usa.
-import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcrypt'
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcrypt";
 
-// Instancia o Prisma Client
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log(`Iniciando o seed...`);
+  console.log(`Iniciando o seed de dados...`);
 
-  // 1. Criptografar uma senha padrão
-  // Troque "123456" por uma senha segura de sua preferência
-  const defaultPassword = '123456';
+  const defaultPassword = "123456";
   const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
-  // 2. Criar um usuário Administrador
-  // Usamos 'upsert' para evitar criar duplicatas se o seed for rodado novamente
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@example.com' }, // Chave única para encontrar o usuário
-    update: {}, // O que fazer se ele for encontrado (nada, neste caso)
-    create: {
-      email: 'admin@example.com',
-      name: 'Admin Master',
-      password: hashedPassword,
-      role: 'ADMINISTRADOR', // Usando o Enum do seu schema
-      isActive: true,
-      isApproved: true,
-      phase: 'N/A', // Ou qualquer valor que faça sentido
+  console.log(`\nCriando Igreja Padrão...`);
+
+  const igrejaA = await prisma.church.create({
+    data: {
+      name: "Igreja A",
+      description: "Igreja padrão do sistema",
+      address: "Rua Principal, 100 - Centro",
+      email: "igrejaa@exemplo.com",
     },
   });
 
-  // 3. Criar um usuário Aprendiz de exemplo
-  const aprendiz = await prisma.user.upsert({
-    where: { email: 'aprendiz@example.com' },
+  console.log(`✅ Igreja criada: ${igrejaA.name}`);
+
+  console.log(`\nCriando Usuários Padrão...`);
+
+  const admin = await prisma.user.upsert({
+    where: { email: "admin@example.com" },
     update: {},
     create: {
-      email: 'aprendiz@example.com',
-      name: 'João Aprendiz',
+      email: "admin@example.com",
+      name: "Admin",
       password: hashedPassword,
-      role: 'APRENDIZ', // O padrão, mas é bom ser explícito
-      isActive: true,
-      isApproved: false, // Exemplo de um aprendiz que precisa de aprovação
-      churchId: 'igreja_exemplo_01', // ID de exemplo
-      phase: '1',
+      role: "ADMINISTRADOR",
+      isApproved: true,
+      churchId: null,
     },
   });
 
-  console.log(`Usuário Admin criado: ${admin.email}`);
-  console.log(`Usuário Aprendiz criado: ${aprendiz.email}`);
-  console.log(`Seed finalizado.`);
+  const aprendiz = await prisma.user.upsert({
+    where: { email: "aprendiz@example.com" },
+    update: {},
+    create: {
+      email: "aprendiz@example.com",
+      name: "Aprendiz",
+      password: hashedPassword,
+      role: "APRENDIZ",
+      isApproved: true,
+      phase: "1",
+      churchId: igrejaA.id,
+    },
+  });
+
+  const instrutor = await prisma.user.upsert({
+    where: { email: "instrutor@example.com" },
+    update: {},
+    create: {
+      email: "instrutor@example.com",
+      name: "Instrutor",
+      password: hashedPassword,
+      role: "INSTRUTOR",
+      isApproved: true,
+      phase: "2",
+      churchId: igrejaA.id,
+    },
+  });
+
+  const encarregado = await prisma.user.upsert({
+    where: { email: "encarregado@example.com" },
+    update: {},
+    create: {
+      email: "encarregado@example.com",
+      name: "Encarregado",
+      password: hashedPassword,
+      role: "ENCARREGADO",
+      isApproved: true,
+      phase: "3",
+      churchId: igrejaA.id,
+    },
+  });
+
+  console.log(`✅ Usuários criados:`);
+  console.log(`   - ${admin.email} (${admin.role}) - Sem igreja`);
+  console.log(`   - ${aprendiz.email} (${aprendiz.role}) - Igreja A`);
+  console.log(`   - ${instrutor.email} (${instrutor.role}) - Igreja A`);
+  console.log(`   - ${encarregado.email} (${encarregado.role}) - Igreja A`);
+  console.log(`\n🎉 Seed finalizado com sucesso!`);
 }
 
-// Executa a função main e lida com erros
 main()
   .then(async () => {
-    // Fecha a conexão com o banco de dados
     await prisma.$disconnect();
   })
   .catch(async (e) => {
-    console.error('Erro durante o seed:', e);
+    console.error("❌ Erro durante o seed:", e);
     await prisma.$disconnect();
     process.exit(1);
   });
