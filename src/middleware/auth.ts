@@ -4,7 +4,7 @@ import { AuthService } from '../service/authService';
 import { AuthRequest } from '../types';
 import { UserRole } from '@prisma/client';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
+const JWT_SECRET = process.env.JWT_SECRET!;
 
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -61,6 +61,7 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction) =>
       const token = authHeader.split(' ')[1];
 
       if (token) {
+        
         const decoded = jwt.verify(token, JWT_SECRET) as any;
 
         (req as AuthRequest).user = {

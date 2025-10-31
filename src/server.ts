@@ -16,15 +16,17 @@ const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
 
-// API
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+    origin: process.env.CORS_ORIGIN,
     credentials: true,
   })
 );
 
 app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
+
+// API
 app.use("/api/users", authMiddleware, userRoutes);
 app.use("/api/churchs", churchRoutes);
 app.use("/api/auth", authRoutes);
