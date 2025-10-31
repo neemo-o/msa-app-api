@@ -7,6 +7,7 @@ import dotenv from "dotenv";
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware } from "./middleware/auth";
 import { errorHandler, handleUnhandledRejections } from "./middleware/errorHandler";
+import { logger } from "./utils/logger";
 import rateLimit from 'express-rate-limit';
 
 // Routes
@@ -89,7 +90,9 @@ app.use("/health", async (req, res) => {
 
     res.status(200).json(healthCheck);
   } catch (error) {
-    console.error("Health check failed:", error);
+    logger.error("Health check failed", "HEALTH_CHECK", {
+      error: error instanceof Error ? error.message : String(error)
+    });
     res.status(503).json({
       status: "unhealthy",
       timestamp: new Date().toISOString(),
@@ -133,13 +136,18 @@ handleUnhandledRejections();
 async function startServer() {
   try {
     await prisma.$connect();
-    console.log("Conectado ao banco de dados");
+    logger.info("Conectado ao banco de dados", "DATABASE");
 
     app.listen(PORT, () => {
-      console.log(`Servidor conectado e rodando na porta ${PORT}`);
+      logger.info(`Servidor conectado e rodando na porta ${PORT}`, "SERVER", {
+        port: PORT,
+        environment: process.env.NODE_ENV || 'development'
+      });
     });
   } catch (error) {
-    console.error("Erro ao conectar ao banco de dados:", error);
+    logger.error("Erro ao conectar ao banco de dados", "DATABASE", {
+      error: error instanceof Error ? error.message : String(error)
+    });
     process.exit(1);
   }
 }
@@ -147,13 +155,13 @@ async function startServer() {
 startServer();
 
 process.on("SIGTERM", async () => {
-  console.log("Recebido SIGTERM, encerrando...");
+  logger.info("Recebido SIGTERM, encerrando servidor", "SHUTDOWN");
   await prisma.$disconnect();
   process.exit(0);
 });
 
 process.on("SIGINT", async () => {
-  console.log("Recebido SIGINT, encerrando...");
+  logger.info("Recebido SIGINT, encerrando servidor", "SHUTDOWN");
   await prisma.$disconnect();
   process.exit(0);
 });

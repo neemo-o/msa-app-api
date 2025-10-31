@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { logger } from '../utils/logger';
 
 export interface AppError {
   message: string;
@@ -37,15 +38,14 @@ export const errorHandler = (
   error.message = err.message;
 
   // Log error
-  console.error('Error:', {
-    message: err.message,
-    stack: err.stack,
-    url: req.originalUrl,
-    method: req.method,
-    ip: req.ip,
-    userAgent: req.get('User-Agent'),
-    timestamp: new Date().toISOString()
-  });
+  logger.httpError(
+    req.method,
+    req.originalUrl,
+    error.statusCode || 500,
+    err as Error,
+    req.ip,
+    (req as any).user?.id
+  );
 
   // Mongoose bad ObjectId
   if (err.name === 'CastError') {
@@ -116,15 +116,25 @@ export const catchAsync = (fn: Function) => {
 // Handle unhandled promise rejections
 export const handleUnhandledRejections = () => {
   process.on('unhandledRejection', (err: Error) => {
-    console.error('UNHANDLED REJECTION! 💥 Shutting down...');
-    console.error(err.name, err.message);
+    logger.error('UNHANDLED REJECTION! Shutting down server', 'SYSTEM', {
+      error: {
+        name: err.name,
+        message: err.message,
+        stack: err.stack
+      }
+    });
     // Close server & exit process
     process.exit(1);
   });
 
   process.on('uncaughtException', (err: Error) => {
-    console.error('UNCAUGHT EXCEPTION! 💥 Shutting down...');
-    console.error(err.name, err.message);
+    logger.error('UNCAUGHT EXCEPTION! Shutting down server', 'SYSTEM', {
+      error: {
+        name: err.name,
+        message: err.message,
+        stack: err.stack
+      }
+    });
     process.exit(1);
   });
 };
