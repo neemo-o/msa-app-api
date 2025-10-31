@@ -26,6 +26,14 @@ model User {
   entryRequests    EntryRequest[] @relation("UserEntryRequests")
   approvedRequests EntryRequest[] @relation("ApprovedEntryRequests")
 
+  // Indexes
+  @@index([role])
+  @@index([churchId])
+  @@index([isActive])
+  @@index([role, churchId])
+  @@index([role, churchId, isActive])
+  @@index([email, isActive])
+
   @@map("users")
 }
 
@@ -44,6 +52,10 @@ model Church {
   users         User[]
   entryRequests EntryRequest[]
 
+  // Indexes
+  @@index([isActive])
+  @@index([name])
+
   @@map("churches")
 }
 
@@ -60,6 +72,13 @@ model EntryRequest {
   user      User   @relation("UserEntryRequests", fields: [userId], references: [id])
   church    Church @relation(fields: [churchId], references: [id])
   professor User?  @relation("ApprovedEntryRequests", fields: [professorId], references: [id])
+
+  // Indexes
+  @@index([status])
+  @@index([churchId])
+  @@index([professorId])
+  @@index([status, churchId])
+  @@index([userId, status])
 
   @@map("entry_requests")
 }
@@ -79,4 +98,3 @@ enum RequestStatus {
   APROVADO
   REJEITADO
 }
-

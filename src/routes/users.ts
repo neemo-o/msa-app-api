@@ -50,6 +50,7 @@ router.get('/', auth, async (req: Request, res: Response) => {
          const users = await prisma.user.findMany({
            where,
            take: take ? parseInt(take as string) : undefined,
+           orderBy: { createdAt: 'desc' },
            select: {
              id: true,
              name: true,
@@ -58,6 +59,12 @@ router.get('/', auth, async (req: Request, res: Response) => {
              avatar: true,
              churchId: true,
              phase: true,
+             church: {
+               select: {
+                 id: true,
+                 name: true,
+               }
+             }
            },
          });
 

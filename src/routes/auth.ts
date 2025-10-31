@@ -3,136 +3,119 @@ import { Router, Request, Response } from 'express';
 import { AuthService } from '../service/authService';
 import { UserRole } from '../types';
 import { PrismaClient } from '@prisma/client';
+import { validate, loginValidation, registerValidation } from '../validations';
+import { catchAsync } from '../middleware/errorHandler';
 
 // Configuration
 const prisma = new PrismaClient();
 const router = Router();
 
 // Login
-router.post('/login', async (req: Request, res: Response) => {
-  try {
-    const { email, password } = req.body;
+router.post('/login', validate(loginValidation), catchAsync(async (req: Request, res: Response) => {
+  const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email e senha são obrigatórios' });
-    }
+  const user = await AuthService.findUserByEmail(email);
 
-    const user = await AuthService.findUserByEmail(email);
+  if (!user || !user.isActive) {
+    return res.status(401).json({ error: 'Email ou senha estão incorretas' });
+  }
 
-    if (!user || !user.isActive) {
-      return res.status(401).json({ error: 'Email ou senha estão incorretas' });
-    }
+  const isPasswordValid = await AuthService.verifyPassword(password, user.password);
 
-    const isPasswordValid = await AuthService.verifyPassword(password, user.password);
+  if (!isPasswordValid) {
+    return res.status(401).json({ error: "Email ou senha estão incorretas" });
+  }
 
-    if (!isPasswordValid) {
-      return res.status(401).json({ error: "Email ou senha estão incorretas" });
-    }
+  if (!user.isApproved) {
+    return res.status(401).json({ error: 'Sua solicitação ainda não foi aprovada. Aguarde a aprovação do professor.' });
+  }
 
-    if (!user.isApproved) {
-      return res.status(401).json({ error: 'Sua solicitação ainda não foi aprovada. Aguarde a aprovação do professor.' });
-    }
+  const token = AuthService.generateToken({
+    id: user.id,
+    email: user.email,
+    role: user.role,
+  });
 
-    const token = AuthService.generateToken({
+  res.json({
+    message: 'Login realizado com sucesso',
+    token,
+    user: {
       id: user.id,
+      name: user.name,
       email: user.email,
       role: user.role,
-    });
-
-    res.json({
-      message: 'Login realizado com sucesso',
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        avatar: user.avatar,
-        church: user.church,
-        phase: user.phase,
-        isApproved: user.isApproved,
-      },
-    });
-  } catch (error) {
-    console.error('Erro no login:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
-  }
-});
+      avatar: user.avatar,
+      church: user.church,
+      phase: user.phase,
+      isApproved: user.isApproved,
+    },
+  });
+}));
 
 // Registro
-router.post('/register', async (req: Request, res: Response) => {
-  try {
-    const { name, email, password, role, churchId } = req.body;
+router.post('/register', validate(registerValidation), catchAsync(async (req: Request, res: Response) => {
+  const { name, email, password, role, churchId } = req.body;
 
-    if (!name || !email || !password || !churchId) {
-      return res.status(400).json({ error: 'Nome, email, senha e igreja são obrigatórios' });
-    }
+  // Verificar se a igreja existe
+  const church = await prisma.church.findUnique({
+    where: { id: churchId },
+  });
 
-    // Verificar se a igreja existe
-    const church = await prisma.church.findUnique({
-      where: { id: churchId },
-    });
+  if (!church || !church.isActive) {
+    return res.status(400).json({ error: 'Igreja inválida' });
+  }
 
-    if (!church || !church.isActive) {
-      return res.status(400).json({ error: 'Igreja inválida' });
-    }
-
-    // Verificar se já existe um Encarregado nesta igreja
-    if (role === UserRole.ENCARREGADO) {
-      const existingEnc = await prisma.user.findFirst({
-        where: {
-          role: UserRole.ENCARREGADO,
-          churchId: churchId,
-          isActive: true,
-        },
-      });
-
-      if (existingEnc) {
-        return res.status(409).json({ error: 'Já existe um Encarregado nesta igreja' });
-      }
-    }
-
-    // Verificar se usuário já existe
-    const existingUser = await AuthService.findUserByEmail(email);
-
-    if (existingUser) {
-      return res.status(409).json({ error: 'Email já cadastrado' });
-    }
-
-    const user = await AuthService.createUser({
-      name,
-      email,
-      password,
-      role: role || UserRole.APRENDIZ,
-      churchId: undefined,
-      isApproved: false,
-      phase: "1",
-    });
-
-    // Encontrar professor da igreja
-    const professor = await prisma.user.findFirst({
-      where: { role: UserRole.ENCARREGADO, churchId: churchId },
-    });
-
-    // Criar solicitação de entrada
-    // @ts-ignore
-    await prisma.entryRequest.create({
-      data: {
-        userId: user.id,
-        churchId,
-        professorId: professor?.id,
+  // Verificar se já existe um Encarregado nesta igreja
+  if (role === UserRole.ENCARREGADO) {
+    const existingEnc = await prisma.user.findFirst({
+      where: {
+        role: UserRole.ENCARREGADO,
+        churchId: churchId,
+        isActive: true,
       },
     });
 
-    res.status(201).json({
-      message: 'Sua solicitação foi enviada com sucesso! Aguarde a aprovação.',
-      user,
-    });
-  } catch (error) {
-    console.error('Erro no registro:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    if (existingEnc) {
+      return res.status(409).json({ error: 'Já existe um Encarregado nesta igreja' });
+    }
   }
-});
+
+  // Verificar se usuário já existe
+  const existingUser = await AuthService.findUserByEmail(email);
+
+  if (existingUser) {
+    return res.status(409).json({ error: 'Email já cadastrado' });
+  }
+
+  const user = await AuthService.createUser({
+    name,
+    email,
+    password,
+    role: role || UserRole.APRENDIZ,
+    churchId: undefined,
+    isApproved: false,
+    phase: "1",
+  });
+
+  // Encontrar professor da igreja
+  const professor = await prisma.user.findFirst({
+    where: { role: UserRole.ENCARREGADO, churchId: churchId },
+  });
+
+  // Criar solicitação de entrada
+  await prisma.entryRequest.create({
+    data: {
+      userId: user.id,
+      churchId,
+      professorId: professor?.id,
+    },
+  });
+
+  res.status(201).json({
+    message: 'Sua solicitação foi enviada com sucesso! Aguarde a aprovação.',
+    user,
+  });
+}));
 
 // Verificar token
 router.get('/verify', async (req: Request, res: Response) => {

@@ -1,9 +1,12 @@
 // Imports
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import compression from 'compression';
 import dotenv from "dotenv";
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware } from "./middleware/auth";
+import { errorHandler, handleUnhandledRejections } from "./middleware/errorHandler";
 import rateLimit from 'express-rate-limit';
 
 // Routes
@@ -20,6 +23,22 @@ const prisma = new PrismaClient();
 const PORT = process.env.PORT;
 
 const allowedOrigins = process.env.CORS_ORIGIN?.split(",") || [];
+
+// Security middleware
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  },
+}));
+
+// Compression middleware
+app.use(compression());
 
 app.use(
   cors({
@@ -103,6 +122,12 @@ app.use("/api/churchs", churchRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/docs", docsRoutes);
+
+// Global error handler (must be last)
+app.use(errorHandler);
+
+// Handle unhandled promise rejections
+handleUnhandledRejections();
 
 // Applcation
 async function startServer() {
