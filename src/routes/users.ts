@@ -10,6 +10,34 @@ const prisma = new PrismaClient();
 const router = Router();
 
 
+// Obter usuário por ID
+router.get('/:id', auth, async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+
+        const user = await prisma.user.findUnique({
+            where: { id, isActive: true },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                churchId: true,
+                phase: true,
+            },
+        });
+
+        if (!user) {
+            return res.status(404).json({ error: "Usuário não encontrado" });
+        }
+
+        res.json({ user });
+    } catch (error) {
+        console.log("Erro ao buscar usuário:", error);
+        res.status(500).json({ error: "Erro ao buscar usuário" });
+    }
+});
+
 // Routes
 router.get('/', auth, async (req: Request, res: Response) => {
     try {
@@ -128,7 +156,22 @@ router.put('/:id', auth, async (req: AuthRequest, res: Response) => {
         if (name) updateData.name = name;
         if (email) updateData.email = email;
         if (password) updateData.password = await AuthService.hashPassword(password);
-        if (role) updateData.role = role;
+
+        // Validar e converter role se fornecido
+        if (role) {
+            if (role === 'ADMINISTRADOR') {
+                updateData.role = UserRole.ADMINISTRADOR;
+            } else if (role === 'INSTRUTOR') {
+                updateData.role = UserRole.INSTRUTOR;
+            } else if (role === 'ENCARREGADO') {
+                updateData.role = UserRole.ENCARREGADO;
+            } else if (role === 'APRENDIZ') {
+                updateData.role = UserRole.APRENDIZ;
+            } else {
+                return res.status(400).json({ error: "Função inválida" });
+            }
+        }
+
         if (churchId !== undefined) updateData.churchId = churchId;
         if (phase !== undefined) updateData.phase = phase;
 
@@ -178,78 +221,61 @@ router.post('/', auth, async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ error: "Nome, email e senha são obrigatórios" });
         }
 
-        // Verificar se email já existe
-        const existingUser = await prisma.user.findUnique({
-            where: { email },
-        });
+        // Verificar se a igreja existe (exceto para administradores)
+        if (role !== 'ADMINISTRADOR') {
+            if (!churchId) {
+                return res.status(400).json({ error: 'Igreja é obrigatória' });
+            }
+
+            const church = await prisma.church.findUnique({
+                where: { id: churchId },
+            });
+
+            if (!church || !church.isActive) {
+                return res.status(400).json({ error: 'Igreja inválida' });
+            }
+
+            // Verificar se já existe um Encarregado nesta igreja
+            if (role === 'ENCARREGADO') {
+                const existingEnc = await prisma.user.findFirst({
+                    where: {
+                        role: UserRole.ENCARREGADO,
+                        churchId: churchId,
+                        isActive: true,
+                    },
+                });
+
+                if (existingEnc) {
+                    return res.status(409).json({ error: 'Já existe um Encarregado nesta igreja' });
+                }
+            }
+        }
+
+        // Verificar se usuário já existe
+        const existingUser = await AuthService.findUserByEmail(email);
 
         if (existingUser) {
-            return res.status(409).json({ error: "Email já cadastrado" });
+            return res.status(409).json({ error: 'Email já cadastrado' });
         }
 
-        // Validações baseadas no role
-        if (role !== 'ADMINISTRADOR' && !churchId) {
-            return res.status(400).json({ error: "Igreja é obrigatória para este tipo de usuário" });
-        }
-
-        if (role === 'APRENDIZ' && !phase) {
-            return res.status(400).json({ error: "Fase é obrigatória para aprendizes" });
-        }
-
-        const hashedPassword = await AuthService.hashPassword(password);
-
-        const user = await prisma.user.create({
-            data: {
-                name,
-                email,
-                password: hashedPassword,
-                role,
-                churchId: churchId || null,
-                phase: phase || null,
-                isApproved: role === 'ADMINISTRADOR' ? true : false,
-            },
-            select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-                churchId: true,
-                phase: true,
-            },
+        // Usar AuthService.createUser para manter consistência
+        const user = await AuthService.createUser({
+            name,
+            email,
+            password,
+            role: role === 'ADMINISTRADOR' ? UserRole.ADMINISTRADOR :
+                  role === 'INSTRUTOR' ? UserRole.INSTRUTOR :
+                  role === 'ENCARREGADO' ? UserRole.ENCARREGADO :
+                  UserRole.APRENDIZ,
+            churchId: role !== 'ADMINISTRADOR' ? churchId : undefined,
+            isApproved: role === 'ADMINISTRADOR',
+            phase: phase || "1",
         });
 
         res.status(201).json({ user });
     } catch (error) {
         console.log("Erro ao criar usuário:", error);
         res.status(500).json({ error: "Erro ao criar usuário" });
-    }
-});
-
-// Obter usuário por ID
-router.get('/:id', auth, async (req: AuthRequest, res: Response) => {
-    try {
-        const { id } = req.params;
-
-        const user = await prisma.user.findUnique({
-            where: { id, isActive: true },
-            select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-                churchId: true,
-                phase: true,
-            },
-        });
-
-        if (!user) {
-            return res.status(404).json({ error: "Usuário não encontrado" });
-        }
-
-        res.json({ user });
-    } catch (error) {
-        console.log("Erro ao buscar usuário:", error);
-        res.status(500).json({ error: "Erro ao buscar usuário" });
     }
 });
 
