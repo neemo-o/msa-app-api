@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MSA App - Admin</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body id="adminPage">
+    <div class="container">
+        <header class="header">
+            <h1>Painel Administrativo</h1>
+            <button id="logoutBtn" class="btn-secondary">Sair</button>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="tab-btn active" data-tab="users">Usuários</button>
+            <button class="tab-btn" data-tab="churches">Igrejas</button>
+            <button class="tab-btn" data-tab="requests">Solicitações</button>
+        </nav>
+
+        <div id="usersTab" class="tab-content active">
+            <div class="crud-section">
+                <h2>Gerenciar Usuários</h2>
+                <button id="addUserBtn" class="btn-primary">Adicionar Usuário</button>
+                <div id="usersList"></div>
+            </div>
+        </div>
+
+        <div id="churchesTab" class="tab-content">
+            <div class="crud-section">
+                <h2>Gerenciar Igrejas</h2>
+                <button id="addChurchBtn" class="btn-primary">Adicionar Igreja</button>
+                <div id="churchesList"></div>
+            </div>
+        </div>
+
+        <div id="requestsTab" class="tab-content">
+            <div class="crud-section">
+                <h2>Solicitações de Entrada</h2>
+                <div id="requestsList"></div>
+            </div>
+        </div>
+
+        <!-- Modal para adicionar/editar usuário -->
+        <div id="userModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2 id="userModalTitle">Adicionar Usuário</h2>
+                <form id="userForm">
+                    <input type="hidden" id="userId">
+                    <div class="form-group">
+                        <label for="userName">Nome:</label>
+                        <input type="text" id="userName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userEmail">Email:</label>
+                        <input type="email" id="userEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userPassword">Senha:</label>
+                        <input type="password" id="userPassword">
+                    </div>
+                    <div class="form-group">
+                        <label for="userRole">Função:</label>
+                        <select id="userRole" required>
+                            <option value="APRENDIZ">Aprendiz</option>
+                            <option value="INSTRUTOR">Instrutor</option>
+                            <option value="ENCARREGADO">Encarregado</option>
+                            <option value="ADMINISTRADOR">Administrador</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="userChurch">Igreja:</label>
+                        <select id="userChurch" required>
+                            <!-- Opções carregadas dinamicamente -->
+                        </select>
+                    </div>
+                    <div class="form-group" id="phaseGroup">
+                        <label for="userPhase">Fase:</label>
+                        <input type="text" id="userPhase">
+                    </div>
+                    <button type="submit" class="btn-primary">Salvar</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal para adicionar/editar igreja -->
+        <div id="churchModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2 id="churchModalTitle">Adicionar Igreja</h2>
+                <form id="churchForm">
+                    <input type="hidden" id="churchId">
+                    <div class="form-group">
+                        <label for="churchName">Nome:</label>
+                        <input type="text" id="churchName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="churchDescription">Descrição:</label>
+                        <textarea id="churchDescription"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="churchAddress">Endereço:</label>
+                        <input type="text" id="churchAddress">
+                    </div>
+                    <div class="form-group">
+                        <label for="churchPhone">Telefone:</label>
+                        <input type="text" id="churchPhone">
+                    </div>
+                    <div class="form-group">
+                        <label for="churchEmail">Email:</label>
+                        <input type="email" id="churchEmail">
+                    </div>
+                    <button type="submit" class="btn-primary">Salvar</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="message"></div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

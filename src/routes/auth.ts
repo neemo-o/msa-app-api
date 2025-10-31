@@ -77,6 +77,21 @@ router.post('/register', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Igreja inválida' });
     }
 
+    // Verificar se já existe um Encarregado nesta igreja
+    if (role === UserRole.ENCARREGADO) {
+      const existingEnc = await prisma.user.findFirst({
+        where: {
+          role: UserRole.ENCARREGADO,
+          churchId: churchId,
+          isActive: true,
+        },
+      });
+
+      if (existingEnc) {
+        return res.status(409).json({ error: 'Já existe um Encarregado nesta igreja' });
+      }
+    }
+
     // Verificar se usuário já existe
     const existingUser = await AuthService.findUserByEmail(email);
 

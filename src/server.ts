@@ -26,6 +26,9 @@ app.use(
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
+// Servir arquivos estáticos
+app.use(express.static('public'));
+
 // API
 app.use("/api/users", authMiddleware, userRoutes);
 app.use("/api/churchs", churchRoutes);

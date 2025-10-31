@@ -96,4 +96,54 @@ router.get("/:id", async (req: Request, res: Response) => {
 });
 
 
+// Atualizar igreja
+router.put("/:id", authMiddleware, requireRole([UserRole.ADMINISTRADOR]), async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { name, description, address, phone, email } = req.body;
+
+    const updateData: any = {};
+    if (name) updateData.name = name;
+    if (description !== undefined) updateData.description = description;
+    if (address !== undefined) updateData.address = address;
+    if (phone !== undefined) updateData.phone = phone;
+    if (email !== undefined) updateData.email = email;
+
+    const church = await prisma.church.update({
+      where: { id },
+      data: updateData,
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        address: true,
+        phone: true,
+        email: true,
+      },
+    });
+
+    res.json({ church });
+  } catch (error) {
+    console.error("Erro ao atualizar igreja:", error);
+    res.status(500).json({ error: "Erro interno do servidor" });
+  }
+});
+
+// Deletar igreja
+router.delete("/:id", authMiddleware, requireRole([UserRole.ADMINISTRADOR]), async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    await prisma.church.update({
+      where: { id },
+      data: { isActive: false },
+    });
+
+    res.json({ message: "Igreja desativada com sucesso" });
+  } catch (error) {
+    console.error("Erro ao deletar igreja:", error);
+    res.status(500).json({ error: "Erro interno do servidor" });
+  }
+});
+
 export default router;
