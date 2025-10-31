@@ -37,6 +37,11 @@ app.use(
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
+
+app.use("/health", (req, res) => {
+  res.status(200).send("OK");
+});
+
 // Servir arquivos estáticos
 app.use(express.static('public'));
 
