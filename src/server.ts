@@ -116,6 +116,7 @@ const limiter = rateLimit({
 });
 
 // Apply rate limiting to API routes
+app.set("trust proxy", 1);
 app.use('/api/', limiter);
 
 // Servir arquivos estáticos
@@ -148,7 +149,8 @@ async function startServer() {
     await prisma.$connect();
     logger.info("Conectado ao banco de dados", "DATABASE");
 
-    app.listen(PORT, () => {
+    // @ts-ignore
+    app.listen(PORT, '127.0.0.1', () => {
       logger.info(`Servidor conectado e rodando na porta ${PORT}`, "SERVER", {
         port: PORT,
         environment: process.env.NODE_ENV || 'development'
