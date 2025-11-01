@@ -54,6 +54,13 @@ router.get("/", requireEntryRequestAccess, async (req: AuthRequest, res: Respons
             name: true,
           },
         },
+        professor: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
       },
       orderBy: {
         createdAt: 'desc',

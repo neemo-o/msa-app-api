@@ -19,6 +19,9 @@ router.get("/", async (req: Request, res: Response) => {
         id: true,
         name: true,
         description: true,
+        address: true,
+        phone: true,
+        email: true,
       },
       orderBy: {
         name: "asc",

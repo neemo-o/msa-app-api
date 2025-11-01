@@ -272,42 +272,69 @@ async function loadChurchesForSelect() {
   }
 }
 
-function showUserModal(user = null) {
+function showUserModal(user) {
   const modal = document.getElementById("userModal");
   const form = document.getElementById("userForm");
   const title = document.getElementById("userModalTitle");
+  const passwordInput = document.getElementById("userPassword");
+  const roleSelect = document.getElementById("userRole");
 
   if (user) {
     title.textContent = "Editar Usuário";
     document.getElementById("userId").value = user.id;
     document.getElementById("userName").value = user.name;
     document.getElementById("userEmail").value = user.email;
-    document.getElementById("userPassword").value = "";
+    document.getElementById("userPassword").value = ""; // Senha sempre vazia na edição
     document.getElementById("userRole").value = user.role;
     document.getElementById("userChurch").value = user.churchId || "";
     document.getElementById("userPhase").value = user.phase || "";
+    passwordInput.removeAttribute("required"); // Não obrigatório na edição
   } else {
     title.textContent = "Adicionar Usuário";
     form.reset();
     document.getElementById("userId").value = "";
+    passwordInput.setAttribute("required", "required"); // Obrigatório na criação
   }
 
-  loadChurchesForSelect();
-  togglePhaseField();
   modal.style.display = "block";
+
+  // Configurar campos imediatamente
+  toggleFieldsVisibility();
+
+  // Adicionar event listener para mudança de role
+  roleSelect.addEventListener("change", toggleFieldsVisibility);
+
+  // Carregar igrejas em background
+  loadChurchesForSelect();
 }
 
-function togglePhaseField() {
-  const role = document.getElementById("userRole").value;
+function toggleFieldsVisibility() {
+  const role = document.getElementById("userRole")?.value;
   const phaseGroup = document.getElementById("phaseGroup");
+  const churchGroup = document.getElementById("churchGroup");
   const phaseInput = document.getElementById("userPhase");
+  const churchSelect = document.getElementById("userChurch");
+
+  if (!phaseGroup || !churchGroup || !phaseInput || !churchSelect) {
+    return; // Elementos ainda não prontos
+  }
 
   if (role === "APRENDIZ") {
     phaseGroup.style.display = "block";
-    phaseInput.required = true;
-  } else {
+    phaseInput.setAttribute("required", "required");
+    churchGroup.style.display = "block";
+    churchSelect.setAttribute("required", "required");
+  } else if (role === "ADMINISTRADOR") {
     phaseGroup.style.display = "none";
-    phaseInput.required = false;
+    phaseInput.removeAttribute("required");
+    churchGroup.style.display = "none";
+    churchSelect.removeAttribute("required");
+  } else {
+    // ENCARREGADO, INSTRUTOR
+    phaseGroup.style.display = "none";
+    phaseInput.removeAttribute("required");
+    churchGroup.style.display = "block";
+    churchSelect.setAttribute("required", "required");
   }
 }
 
@@ -606,6 +633,7 @@ function renderRequests(requests) {
                 <p><i class="fas fa-envelope"></i> ${request.user.email}</p>
                 <p><i class="fas fa-user-tag"></i> ${request.user.role}</p>
                 <p><i class="fas fa-church"></i> ${request.church?.name || "Igreja não especificada"}</p>
+                ${request.professor ? `<p><i class="fas fa-user-graduate"></i> Professor: ${request.professor.name}</p>` : ''}
                 <p><i class="fas fa-clock"></i> ${request.status}</p>
             </div>
             ${
@@ -807,9 +835,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     document.getElementById("userForm").addEventListener("submit", saveUser);
     document.getElementById("churchForm").addEventListener("submit", saveChurch);
-    document
-      .getElementById("userRole")
-      .addEventListener("change", togglePhaseField);
 
     document.getElementById("logLevelFilter").addEventListener("change", (e) => {
       logFilters.level = e.target.value;

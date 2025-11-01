@@ -49,7 +49,7 @@ export class AuthService {
         role: userData.role || UserRole.APRENDIZ,
         churchId: userData.churchId || null,
         isApproved: userData.isApproved || false,
-        phase: userData.phase || "1",
+        ...(userData.phase && { phase: userData.phase }),
       },
       select: {
         id: true,

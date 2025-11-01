@@ -208,7 +208,7 @@ router.post('/', auth, async (req: AuthRequest, res: Response) => {
                   UserRole.APRENDIZ,
             churchId: role !== 'ADMINISTRADOR' ? churchId : undefined,
             isApproved: role === 'ADMINISTRADOR',
-            phase: phase || "1",
+            phase: role === 'APRENDIZ' ? phase : undefined,
         });
 
         res.status(201).json({ user });
