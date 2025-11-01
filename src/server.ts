@@ -16,6 +16,8 @@ import churchRoutes from "./routes/churchs";
 import authRoutes from "./routes/auth";
 import uploadRoutes from "./routes/uploads";
 import docsRoutes from "./routes/docs";
+import logsRoutes from "./routes/logs";
+import entryRequestRoutes from "./routes/entry-requests";
 
 // Configuration
 dotenv.config();
@@ -31,8 +33,9 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
       scriptSrc: ["'self'"],
+      scriptSrcAttr: ["'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
     },
   },
@@ -104,7 +107,7 @@ app.use("/health", async (req, res) => {
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 1000, // Aumentado para 1000 requests por 15 minutos
   message: {
     error: 'Muitas requisições deste IP, tente novamente mais tarde.'
   },
@@ -125,6 +128,13 @@ app.use("/api/churchs", churchRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/docs", docsRoutes);
+app.use("/api/logs", logsRoutes);
+app.use("/api/entry-requests", authMiddleware, entryRequestRoutes);
+
+// Rota de teste sem middleware
+app.get("/api/test", (req, res) => {
+  res.json({ message: "Servidor funcionando", timestamp: new Date().toISOString() });
+});
 
 // Global error handler (must be last)
 app.use(errorHandler);

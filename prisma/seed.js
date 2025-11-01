@@ -84,6 +84,21 @@ async function main() {
   console.log(`   - ${aprendiz.email} (${aprendiz.role}) - Igreja A`);
   console.log(`   - ${instrutor.email} (${instrutor.role}) - Igreja A`);
   console.log(`   - ${encarregado.email} (${encarregado.role}) - Igreja A`);
+
+  console.log(`\nCriando Solicitações de Entrada de Teste...`);
+
+  // Criar uma solicitação de entrada pendente
+  const entryRequest = await prisma.entryRequest.create({
+    data: {
+      userId: aprendiz.id,
+      churchId: igrejaA.id,
+      professorId: encarregado.id,
+      status: "EM_ANALISE",
+    },
+  });
+
+  console.log(`✅ Solicitação de entrada criada para: ${aprendiz.name} (${aprendiz.email})`);
+
   console.log(`\n🎉 Seed finalizado com sucesso!`);
 }
 

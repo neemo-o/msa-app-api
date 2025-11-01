@@ -75,82 +75,14 @@ router.get('/', auth, async (req: Request, res: Response) => {
     }
 });
 
-router.get("/entry-requests", auth, async (req: AuthRequest, res: Response) => {
-  try {
-    const user = req.user!;
-
-    if (user.role !== UserRole.ENCARREGADO) {
-      return res.status(403).json({ error: "Acesso negado" });
-    }
-
-    const requests = await prisma.entryRequest.findMany({
-      where: {
-        churchId: user.churchId as string,
-        status: "EM_ANALISE",
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true,
-          },
-        },
-      },
-    });
-
-    res.json({ requests });
-  } catch (error) {
-    console.error("Erro ao buscar solicitações de entrada:", error);
-    res.status(500).json({ error: "Erro interno do servidor" });
-  }
+// Rota de teste
+router.get("/test", async (req: AuthRequest, res: Response) => {
+  console.log("Rota de teste chamada");
+  console.log("User:", req.user);
+  res.json({ message: "Rota de teste funcionando", user: req.user });
 });
 
-// Approve entry request
-router.post(
-  "/entry-requests/:id/approve",
-  auth,
-  async (req: AuthRequest, res: Response) => {
-    try {
-      const { id } = req.params;
-      const user = req.user!;
 
-      if (user.role !== UserRole.ENCARREGADO) {
-        return res.status(403).json({ error: "Acesso negado" });
-      }
-
-      const request = await prisma.entryRequest.findUnique({
-        where: { id },
-        include: { church: true },
-      });
-
-      if (!request || request.churchId !== (user.churchId as string)) {
-        return res.status(404).json({ error: "Solicitação não encontrada" });
-      }
-
-      // Aprovar solicitação
-      await prisma.entryRequest.update({
-        where: { id },
-        data: { status: "APROVADO" },
-      });
-
-      // Atualizar user
-      await prisma.user.update({
-        where: { id: request.userId },
-        data: {
-          isApproved: true,
-          churchId: request.churchId,
-        },
-      });
-
-      res.json({ message: "Solicitação aprovada" });
-    } catch (error) {
-      console.error("Erro ao aprovar solicitação:", error);
-      res.status(500).json({ error: "Erro interno do servidor" });
-    }
-  }
-);
 
 
 // Atualizar usuário
