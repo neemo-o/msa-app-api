@@ -24,6 +24,12 @@ router.get('/:id', auth, async (req: AuthRequest, res: Response) => {
                 role: true,
                 churchId: true,
                 phase: true,
+                church: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
             },
         });
 
@@ -86,53 +92,61 @@ router.get("/test", async (req: AuthRequest, res: Response) => {
 
 
 // Atualizar usuário
-router.put('/:id', auth, async (req: AuthRequest, res: Response) => {
-    try {
-        const { id } = req.params;
-        const { name, email, password, role, churchId, phase } = req.body;
+router.put("/:id", auth, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { name, email, password, role, churchId, phase } = req.body;
 
-        const updateData: any = {};
-        if (name) updateData.name = name;
-        if (email) updateData.email = email;
-        if (password) updateData.password = await AuthService.hashPassword(password);
+    const updateData: any = {};
 
-       
-        if (role) {
-            if (role === 'ADMINISTRADOR') {
-                updateData.role = UserRole.ADMINISTRADOR;
-            } else if (role === 'INSTRUTOR') {
-                updateData.role = UserRole.INSTRUTOR;
-            } else if (role === 'ENCARREGADO') {
-                updateData.role = UserRole.ENCARREGADO;
-            } else if (role === 'APRENDIZ') {
-                updateData.role = UserRole.APRENDIZ;
-            } else {
-                return res.status(400).json({ error: "Função inválida" });
-            }
-        }
+    if (name !== undefined) updateData.name = name;
+    if (email !== undefined) updateData.email = email;
+    if (password !== undefined)
+      updateData.password = await AuthService.hashPassword(password);
 
-        if (churchId !== undefined) updateData.churchId = churchId;
-        if (phase !== undefined) updateData.phase = phase;
+    if (role) {
+      const validRoles = [
+        "ADMINISTRADOR",
+        "INSTRUTOR",
+        "ENCARREGADO",
+        "APRENDIZ",
+      ];
+      if (!validRoles.includes(role))
+        return res.status(400).json({ error: "Função inválida" });
 
-        const user = await prisma.user.update({
-            where: { id },
-            data: updateData,
-            select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-                churchId: true,
-                phase: true,
-            },
-        });
-
-        res.json({ user });
-    } catch (error) {
-        console.log("Erro ao atualizar usuário:", error);
-        res.status(500).json({ error: "Erro ao atualizar usuário" });
+      updateData.role = UserRole[role as keyof typeof UserRole];
     }
+
+    if (churchId !== undefined) {
+      updateData.churchId = churchId; // aceita null para remover vínculo
+    }
+
+    if (phase !== undefined) updateData.phase = phase || "1";
+
+    console.log("Atualizando usuário:", { id, updateData });
+
+    const user = await prisma.user.update({
+      where: { id },
+      data: updateData,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        phase: true,
+        churchId: true, // em vez de tentar usar select dentro de church
+      },
+    });
+
+    res.json({ user });
+  } catch (error) {
+    console.error("Erro ao atualizar usuário:", error);
+    res.status(500).json({ error: "Erro ao atualizar usuário" });
+  }
 });
+
+
+
 
 // Deletar usuário
 router.delete('/:id', auth, async (req: AuthRequest, res: Response) => {
@@ -208,7 +222,7 @@ router.post('/', auth, async (req: AuthRequest, res: Response) => {
                   UserRole.APRENDIZ,
             churchId: role !== 'ADMINISTRADOR' ? churchId : undefined,
             isApproved: role === 'ADMINISTRADOR',
-            phase: role === 'APRENDIZ' ? phase : undefined,
+            phase: role === 'APRENDIZ' ? (phase || "1") : undefined,
         });
 
         res.status(201).json({ user });

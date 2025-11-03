@@ -138,9 +138,13 @@ async function loadDashboard() {
       if (requestsRes.ok) {
         const requestsData = await requestsRes.json();
         pendingCount = requestsData.requests?.length || 0;
+      } else if (requestsRes.status === 403) {
+        pendingCount = 0;
+      } else {
+        console.log("Erro ao carregar solicitações:", requestsRes.status);
       }
     } catch (error) {
-      console.log("Erro ao carregar solicitações (pode não ter encarregado)");
+      console.log("Erro de rede ao carregar solicitações:", error);
     }
 
     document.getElementById("pendingRequests").textContent = pendingCount;
@@ -198,9 +202,18 @@ async function loadDashboard() {
 
 function formatUptime(seconds) {
   if (!seconds) return "0s";
-  const hours = Math.floor(seconds / 3600);
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
-  return `${hours}h ${minutes}m`;
+  const secs = Math.floor(seconds % 60);
+
+  const parts = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}m`);
+  if (secs > 0 || parts.length === 0) parts.push(`${secs}s`);
+
+  return parts.join(" ");
 }
 
 async function loadUsers() {
@@ -272,69 +285,45 @@ async function loadChurchesForSelect() {
   }
 }
 
-function showUserModal(user) {
+function showUserModal() {
   const modal = document.getElementById("userModal");
   const form = document.getElementById("userForm");
   const title = document.getElementById("userModalTitle");
-  const passwordInput = document.getElementById("userPassword");
-  const roleSelect = document.getElementById("userRole");
 
-  if (user) {
-    title.textContent = "Editar Usuário";
-    document.getElementById("userId").value = user.id;
-    document.getElementById("userName").value = user.name;
-    document.getElementById("userEmail").value = user.email;
-    document.getElementById("userPassword").value = ""; // Senha sempre vazia na edição
-    document.getElementById("userRole").value = user.role;
-    document.getElementById("userChurch").value = user.churchId || "";
-    document.getElementById("userPhase").value = user.phase || "";
-    passwordInput.removeAttribute("required"); // Não obrigatório na edição
-  } else {
-    title.textContent = "Adicionar Usuário";
-    form.reset();
-    document.getElementById("userId").value = "";
-    passwordInput.setAttribute("required", "required"); // Obrigatório na criação
-  }
+  title.textContent = "Adicionar Usuário";
+  form.reset();
+  document.getElementById("userId").value = "";
+
+  loadChurchesForSelect();
+  togglePhaseField();
 
   modal.style.display = "block";
-
-  // Configurar campos imediatamente
-  toggleFieldsVisibility();
-
-  // Adicionar event listener para mudança de role
-  roleSelect.addEventListener("change", toggleFieldsVisibility);
-
-  // Carregar igrejas em background
-  loadChurchesForSelect();
 }
-
-function toggleFieldsVisibility() {
-  const role = document.getElementById("userRole")?.value;
+function togglePhaseField() {
+  const role = document.getElementById("userRole").value;
   const phaseGroup = document.getElementById("phaseGroup");
-  const churchGroup = document.getElementById("churchGroup");
   const phaseInput = document.getElementById("userPhase");
+  const churchGroup = document.getElementById("churchGroup");
   const churchSelect = document.getElementById("userChurch");
-
-  if (!phaseGroup || !churchGroup || !phaseInput || !churchSelect) {
-    return; // Elementos ainda não prontos
-  }
 
   if (role === "APRENDIZ") {
     phaseGroup.style.display = "block";
-    phaseInput.setAttribute("required", "required");
+    phaseInput.required = true;
     churchGroup.style.display = "block";
-    churchSelect.setAttribute("required", "required");
+    churchSelect.required = true;
+  } else if (role === "INSTRUTOR" || role === "ENCARREGADO") {
+    phaseGroup.style.display = "none";
+    phaseInput.required = false;
+    phaseInput.value = "";
+    churchGroup.style.display = "block";
+    churchSelect.required = true;
   } else if (role === "ADMINISTRADOR") {
     phaseGroup.style.display = "none";
-    phaseInput.removeAttribute("required");
+    phaseInput.required = false;
+    phaseInput.value = "";
     churchGroup.style.display = "none";
-    churchSelect.removeAttribute("required");
-  } else {
-    // ENCARREGADO, INSTRUTOR
-    phaseGroup.style.display = "none";
-    phaseInput.removeAttribute("required");
-    churchGroup.style.display = "block";
-    churchSelect.setAttribute("required", "required");
+    churchSelect.required = false;
+    churchSelect.value = "";
   }
 }
 
@@ -342,28 +331,53 @@ async function saveUser(event) {
   event.preventDefault();
 
   const userId = document.getElementById("userId").value;
+  const role = document.getElementById("userRole").value;
+
+  const nameValue = document.getElementById("name").value;
+  const emailValue = document.getElementById("userEmail").value;
+  const passwordValue = document.getElementById("userPassword").value;
+
+  console.log("Valores capturados:", {
+    name: nameValue,
+    email: emailValue,
+    password: passwordValue,
+    role: role,
+  });
+
   const userData = {
-    name: document.getElementById("userName").value,
-    email: document.getElementById("userEmail").value,
-    role: document.getElementById("userRole").value,
-    churchId: document.getElementById("userChurch").value || null,
-    phase: document.getElementById("userPhase").value || null,
+    name: nameValue,
+    email: emailValue,
+    role: role,
+    churchId:
+      role !== "ADMINISTRADOR"
+        ? document.getElementById("userChurch").value || null
+        : null,
+    phase:
+      role === "APRENDIZ"
+        ? document.getElementById("userPhase").value || null
+        : null,
   };
 
-  const password = document.getElementById("userPassword").value;
-  if (password) {
-    userData.password = password;
+  if (passwordValue) {
+    userData.password = passwordValue;
   }
 
-  if (userData.role !== "ADMINISTRADOR" && !userData.churchId) {
+  if (!userId && !passwordValue) {
+    showToast("Senha é obrigatória para novos usuários", "error");
+    return;
+  }
+
+  if (role !== "ADMINISTRADOR" && !userData.churchId) {
     showToast("Igreja é obrigatória para este tipo de usuário", "error");
     return;
   }
 
-  if (userData.role === "APRENDIZ" && !userData.phase) {
+  if (role === "APRENDIZ" && !userData.phase) {
     showToast("Fase é obrigatória para aprendizes", "error");
     return;
   }
+
+  console.log("Dados a serem enviados:", userData);
 
   try {
     const url = userId ? `${API_BASE}/users/${userId}` : `${API_BASE}/users`;
@@ -379,6 +393,7 @@ async function saveUser(event) {
     });
 
     const data = await response.json();
+    console.log("Resposta do servidor:", data);
 
     if (response.ok) {
       showToast("Usuário salvo com sucesso", "success");
@@ -400,11 +415,31 @@ async function editUser(userId) {
     });
     const data = await response.json();
 
-    if (response.ok) {
-      showUserModal(data.user);
-    } else {
+    if (!response.ok) {
       showToast("Erro ao carregar usuário", "error");
+      return;
     }
+
+    await loadChurchesForSelect();
+
+    const modal = document.getElementById("userModal");
+    const title = document.getElementById("userModalTitle");
+
+    title.textContent = "Editar Usuário";
+
+    document.getElementById("userId").value = data.user.id;
+    document.getElementById("name").value = data.user.name;
+    document.getElementById("userEmail").value = data.user.email;
+    document.getElementById("userPassword").value = "";
+    document.getElementById("userRole").value = data.user.role;
+
+    setTimeout(() => {
+      document.getElementById("userChurch").value = data.user.churchId || "";
+      document.getElementById("userPhase").value = data.user.phase || "";
+      togglePhaseField();
+    }, 100);
+
+    modal.style.display = "block";
   } catch (error) {
     console.error("Erro:", error);
     showToast("Erro ao carregar usuário", "error");
@@ -632,8 +667,9 @@ function renderRequests(requests) {
                 <h4>${request.user.name}</h4>
                 <p><i class="fas fa-envelope"></i> ${request.user.email}</p>
                 <p><i class="fas fa-user-tag"></i> ${request.user.role}</p>
-                <p><i class="fas fa-church"></i> ${request.church?.name || "Igreja não especificada"}</p>
-                ${request.professor ? `<p><i class="fas fa-user-graduate"></i> Professor: ${request.professor.name}</p>` : ''}
+                <p><i class="fas fa-church"></i> ${
+                  request.church?.name || "Igreja não especificada"
+                }</p>
                 <p><i class="fas fa-clock"></i> ${request.status}</p>
             </div>
             ${
@@ -814,11 +850,9 @@ function logout() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // Verificar se estamos na página admin
   const isAdminPage = document.getElementById("adminPage") !== null;
 
   if (isAdminPage) {
-    // Lógica específica para página admin
     console.log("Página admin detectada");
     if (!(await checkAuth())) return;
 
@@ -834,12 +868,19 @@ document.addEventListener("DOMContentLoaded", async () => {
       .addEventListener("click", () => showChurchModal());
 
     document.getElementById("userForm").addEventListener("submit", saveUser);
-    document.getElementById("churchForm").addEventListener("submit", saveChurch);
+    document
+      .getElementById("churchForm")
+      .addEventListener("submit", saveChurch);
+    document
+      .getElementById("userRole")
+      .addEventListener("change", togglePhaseField);
 
-    document.getElementById("logLevelFilter").addEventListener("change", (e) => {
-      logFilters.level = e.target.value;
-      renderLogs();
-    });
+    document
+      .getElementById("logLevelFilter")
+      .addEventListener("change", (e) => {
+        logFilters.level = e.target.value;
+        renderLogs();
+      });
 
     document
       .getElementById("logContextFilter")
@@ -848,8 +889,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         renderLogs();
       });
 
-    document.getElementById("refreshLogsBtn").addEventListener("click", loadLogs);
-    document.getElementById("clearLogsBtn").addEventListener("click", clearLogs);
+    document
+      .getElementById("refreshLogsBtn")
+      .addEventListener("click", loadLogs);
+    document
+      .getElementById("clearLogsBtn")
+      .addEventListener("click", clearLogs);
 
     document.querySelectorAll(".close").forEach((closeBtn) => {
       closeBtn.addEventListener("click", () => {
@@ -864,7 +909,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
   } else {
-    // Lógica para página de login
     console.log("Página de login detectada");
     initLoginPage();
   }

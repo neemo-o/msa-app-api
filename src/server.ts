@@ -21,8 +21,16 @@ import entryRequestRoutes from "./routes/entry-requests";
 
 // Configuration
 dotenv.config();
+
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL environment variable is required');
+}
+
 const app = express();
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  log: ['error'],
+  errorFormat: 'minimal'
+});
 const PORT = process.env.PORT;
 
 const allowedOrigins = process.env.CORS_ORIGIN?.split(",") || [];
@@ -72,8 +80,22 @@ app.use("/debug-cors", (req, res) => {
 
 app.use("/health", async (req, res) => {
   try {
-    // Check database connection
+    // Check basic database connection
     await prisma.$queryRaw`SELECT 1`;
+
+    // Test model queries with timeout
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Health check timeout')), 5000)
+    );
+
+    await Promise.race([
+      Promise.all([
+        prisma.user.count({ where: { isActive: true } }),
+        prisma.church.count({ where: { isActive: true } }),
+        prisma.entryRequest.count({ where: { status: "EM_ANALISE" } })
+      ]),
+      timeoutPromise
+    ]);
 
     const healthCheck = {
       status: "healthy",
@@ -99,7 +121,7 @@ app.use("/health", async (req, res) => {
     res.status(503).json({
       status: "unhealthy",
       timestamp: new Date().toISOString(),
-      error: "Database connection failed"
+      error: "Database connection or query failed"
     });
   }
 });
@@ -143,10 +165,30 @@ app.use(errorHandler);
 // Handle unhandled promise rejections
 handleUnhandledRejections();
 
-// Applcation
+// Application
+async function connectWithRetry(maxRetries = 5, delay = 2000) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      await prisma.$connect();
+      logger.info("Conectado ao banco de dados", "DATABASE");
+      return;
+    } catch (error) {
+      logger.warn(`Tentativa ${attempt}/${maxRetries} de conexão ao banco falhou`, "DATABASE", {
+        error: error instanceof Error ? error.message : String(error)
+      });
+
+      if (attempt === maxRetries) {
+        throw error;
+      }
+
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+}
+
 async function startServer() {
   try {
-    await prisma.$connect();
+    await connectWithRetry();
     logger.info("Conectado ao banco de dados", "DATABASE");
 
     // @ts-ignore
@@ -157,7 +199,7 @@ async function startServer() {
       });
     });
   } catch (error) {
-    logger.error("Erro ao conectar ao banco de dados", "DATABASE", {
+    logger.error("Erro ao conectar ao banco de dados após todas as tentativas", "DATABASE", {
       error: error instanceof Error ? error.message : String(error)
     });
     process.exit(1);

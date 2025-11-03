@@ -101,12 +101,18 @@ router.post("/:id/approve", requireEntryRequestAccess, async (req: AuthRequest, 
     });
 
     // Atualizar usuário
+    const userUpdateData: any = {
+      isApproved: true,
+      churchId: request.churchId,
+    };
+
+    if (request.user.role === "APRENDIZ") {
+      userUpdateData.phase = request.user.phase || "1";
+    }
+
     await prisma.user.update({
       where: { id: request.userId },
-      data: {
-        isApproved: true,
-        churchId: request.churchId,
-      },
+      data: userUpdateData,
     });
 
     res.json({
