@@ -54,17 +54,14 @@ app.use(helmet({
 // Compression middleware
 app.use(compression());
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error("CORS: Origin not allowed"));
-    },
-    credentials: true,
-  })
-);
+// CORS configuration for development - allow all origins including mobile devices
+const corsOptions = {
+  origin: true, // allows any origin for development
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  credentials: true, // allow cookies or auth headers
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
@@ -197,9 +194,10 @@ async function startServer() {
     logger.info("Conectado ao banco de dados", "DATABASE");
 
     // @ts-ignore
-    app.listen(PORT, '127.0.0.1', () => {
-      logger.info(`Servidor conectado e rodando na porta ${PORT}`, "SERVER", {
+    app.listen(PORT, '0.0.0.0', () => {
+      logger.info(`Servidor conectado e rodando na porta ${PORT} (aceitando conexões externas)`, "SERVER", {
         port: PORT,
+        host: '0.0.0.0',
         environment: process.env.NODE_ENV || 'development'
       });
     });

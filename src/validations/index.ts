@@ -299,13 +299,51 @@ export const validate = (schema: Joi.ObjectSchema) => {
     if (error) {
       const errors = error.details.map((detail: any) => ({
         field: detail.path.join('.'),
-        message: detail.message
+        message: detail.message,
+        value: detail.context?.value,
+        type: detail.type
       }));
+
+      // Log detalhado para desenvolvimento
+      console.error('❌ Erro de validação:', {
+        endpoint: req.path,
+        method: req.method,
+        body: req.body,
+        errors: errors.map(e => ({
+          field: e.field,
+          message: e.message,
+          value: e.value,
+          type: e.type
+        }))
+      });
+
+      // Mensagem amigável para o usuário
+      const userFriendlyErrors = errors.map((detail: any) => {
+        const field = detail.field;
+        const message = detail.message;
+
+        // Mapeamento de mensagens amigáveis
+        switch (field) {
+          case 'name':
+            return 'Nome deve ter entre 2 e 100 caracteres';
+          case 'email':
+            return 'Email deve ser válido';
+          case 'password':
+            return 'Senha deve ter pelo menos 6 caracteres';
+          case 'churchId':
+            return 'Selecione uma igreja válida';
+          case 'role':
+            return 'Selecione uma função válida';
+          default:
+            return message;
+        }
+      });
 
       return res.status(400).json({
         status: 'fail',
-        message: 'Dados de entrada inválidos',
-        errors
+        message: 'Verifique os dados informados',
+        errors: userFriendlyErrors,
+        details: process.env.NODE_ENV === 'development' ? errors : undefined
       });
     }
 

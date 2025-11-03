@@ -37,6 +37,7 @@ export class AuthService {
     churchId?: string;
     isApproved?: boolean;
     phase?: string;
+    avatar?: string | null;
   }) {
     const hashedPassword = await this.hashPassword(userData.password);
 
@@ -49,6 +50,7 @@ export class AuthService {
         churchId: userData.churchId || null,
         isApproved: userData.isApproved || false,
         ...(userData.phase && { phase: userData.phase }),
+        ...(userData.avatar && { avatar: userData.avatar }),
       },
       select: {
         id: true,

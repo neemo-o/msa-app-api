@@ -1,6 +1,8 @@
 // Imports
 import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import multer from 'multer';
+import path from 'path';
 import { AuthService } from '../service/authService';
 import { UserRole } from '../types';
 import { PrismaClient } from '@prisma/client';
@@ -11,6 +13,47 @@ import { USER_ROLES, REQUEST_STATUS, ERROR_MESSAGES, SUCCESS_MESSAGES, HTTP_STAT
 // Configuration
 const prisma = new PrismaClient();
 const router = Router();
+
+// Configure multer storage for avatars
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/avatars/');
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+// File filter for avatars
+const avatarFileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  const allowedMimes = [
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/webp',
+    'image/heic',
+    'image/heif',
+    'image/gif',
+    'image/bmp',
+    'image/tiff'
+  ];
+
+  if (allowedMimes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Formato não suportado. Use JPG, PNG, WebP, HEIC, GIF, BMP ou TIFF'));
+  }
+};
+
+// Configure multer for avatar uploads
+const uploadAvatar = multer({
+  storage: storage,
+  fileFilter: avatarFileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  }
+});
 
 router.post('/login', validate(loginValidation), catchAsync(async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -53,8 +96,18 @@ router.post('/login', validate(loginValidation), catchAsync(async (req: Request,
   });
 }));
 
-router.post('/register', validate(registerValidation), catchAsync(async (req: Request, res: Response) => {
+// Extend Request type to include file
+interface MulterRequest extends Request {
+  file?: Express.Multer.File;
+}
+
+router.post('/register', uploadAvatar.single('avatar'), catchAsync(async (req: MulterRequest, res: Response) => {
   const { name, email, password, role, churchId } = req.body;
+
+  // Validate required fields
+  if (!name || !email || !password || !churchId) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'Campos obrigatórios não preenchidos' });
+  }
 
   // Verificar se a igreja existe
   const church = await prisma.church.findUnique({
@@ -87,6 +140,12 @@ router.post('/register', validate(registerValidation), catchAsync(async (req: Re
     return res.status(HTTP_STATUS.CONFLICT).json({ error: ERROR_MESSAGES.EMAIL_ALREADY_EXISTS });
   }
 
+  // Handle avatar upload
+  let avatarUrl = null;
+  if (req.file) {
+    avatarUrl = `/uploads/avatars/${req.file.filename}`;
+  }
+
   const user = await AuthService.createUser({
     name,
     email,
@@ -95,6 +154,7 @@ router.post('/register', validate(registerValidation), catchAsync(async (req: Re
     churchId: undefined,
     isApproved: false,
     phase: "1",
+    avatar: avatarUrl,
   });
 
   // Encontrar professor da igreja
