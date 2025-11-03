@@ -2,18 +2,16 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { PrismaClient, UserRole } from '@prisma/client';
+import { JWT_CONSTANTS } from '../utils/constants';
 
 // Configuration
 const prisma = new PrismaClient();
-const JWT_SECRET = process.env.JWT_SECRET
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 
 // AuthService Class
 export class AuthService {
   static async hashPassword(password: string): Promise<string> {
-    const saltRounds = 12;
-    return bcrypt.hash(password, saltRounds);
+    return bcrypt.hash(password, JWT_CONSTANTS.SALT_ROUNDS);
   }
 
   static async verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
@@ -21,13 +19,14 @@ export class AuthService {
   }
 
   static generateToken(payload: { id: string; email: string; role: UserRole }): string {
+    const secret = JWT_CONSTANTS.SECRET_KEY;
     // @ts-ignore
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    return jwt.sign(payload, secret, { expiresIn: JWT_CONSTANTS.EXPIRES_IN });
   }
 
   static verifyToken(token: string): any {
-    // @ts-ignore
-    return jwt.verify(token, JWT_SECRET);
+    const secret = JWT_CONSTANTS.SECRET_KEY;
+    return jwt.verify(token, secret);
   }
 
   static async createUser(userData: {

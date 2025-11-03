@@ -143,9 +143,14 @@ export class Logger {
     method: string,
     url: string,
     statusCode: number,
-    duration: number,
+    duration: string,
     ip?: string,
-    userId?: string
+    params?: any,
+    query?: any,
+    body?: any,
+    userId?: string,
+    userAgent?: string,
+    referer?: string
   ) {
     this.info(`HTTP ${method} ${url}`, 'HTTP_REQUEST', {
       method,
@@ -153,7 +158,12 @@ export class Logger {
       statusCode,
       duration,
       ip,
-      userId
+      params,
+      query,
+      body,
+      userId,
+      userAgent,
+      referer
     });
   }
 

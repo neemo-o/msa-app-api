@@ -7,8 +7,10 @@ import dotenv from "dotenv";
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware } from "./middleware/auth";
 import { errorHandler, handleUnhandledRejections } from "./middleware/errorHandler";
+import { requestLogger } from "./middleware/requestLogger";
 import { logger } from "./utils/logger";
 import rateLimit from 'express-rate-limit';
+import { RATE_LIMIT, HEALTH_CHECK_TIMEOUT, ERROR_MESSAGES, HTTP_STATUS } from './utils/constants';
 
 // Routes
 import userRoutes from "./routes/users";
@@ -67,6 +69,9 @@ app.use(
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
+// Request logging middleware
+app.use(requestLogger);
+
 app.use("/debug-cors", (req, res) => {
   res.json({
     origin: req.headers.origin,
@@ -85,7 +90,7 @@ app.use("/health", async (req, res) => {
 
     // Test model queries with timeout
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Health check timeout')), 5000)
+      setTimeout(() => reject(new Error('Health check timeout')), HEALTH_CHECK_TIMEOUT)
     );
 
     await Promise.race([
@@ -128,10 +133,10 @@ app.use("/health", async (req, res) => {
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // Aumentado para 1000 requests por 15 minutos
+  windowMs: RATE_LIMIT.WINDOW_MS,
+  max: RATE_LIMIT.MAX_REQUESTS,
   message: {
-    error: 'Muitas requisições deste IP, tente novamente mais tarde.'
+    error: RATE_LIMIT.MESSAGE
   },
   standardHeaders: true,
   legacyHeaders: false,

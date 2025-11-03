@@ -27,6 +27,8 @@ async function checkAuth() {
   isAuthChecking = true;
 
   const token = localStorage.getItem("token");
+
+  // Se não há token, redirecionar para login
   if (!token) {
     window.location.href = "/index.html";
     return false;
@@ -43,23 +45,30 @@ async function checkAuth() {
 
     const data = await response.json();
 
+    // Verificar se é admin válido
     if (!data.valid || data.user.role !== "ADMINISTRADOR") {
-      showToast("Acesso negado", "error");
+      showToast("Acesso negado - apenas administradores podem acessar o painel", "error");
       localStorage.removeItem("token");
       window.location.href = "/index.html";
       return false;
     }
 
+    // Token válido e usuário é admin - permitir acesso direto
     currentUser = data.user;
     document.getElementById("userName").textContent = data.user.name;
     document.querySelector(".avatar").textContent = data.user.name
       .charAt(0)
       .toUpperCase();
+
+    // Mostrar mensagem de boas-vindas para login automático
+    showToast(`Bem-vindo de volta, ${data.user.name}!`, "success");
+
     isAuthChecking = false;
     authChecked = true;
     return true;
   } catch (error) {
     console.error("Erro na verificação:", error);
+    showToast("Sessão expirada - faça login novamente", "error");
     localStorage.removeItem("token");
     window.location.href = "/index.html";
     return false;

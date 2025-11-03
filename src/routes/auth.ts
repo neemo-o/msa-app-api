@@ -1,33 +1,34 @@
 // Imports
 import { Router, Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 import { AuthService } from '../service/authService';
 import { UserRole } from '../types';
 import { PrismaClient } from '@prisma/client';
 import { validate, loginValidation, registerValidation } from '../validations';
 import { catchAsync } from '../middleware/errorHandler';
+import { USER_ROLES, REQUEST_STATUS, ERROR_MESSAGES, SUCCESS_MESSAGES, HTTP_STATUS } from '../utils/constants';
 
 // Configuration
 const prisma = new PrismaClient();
 const router = Router();
 
-// Login
 router.post('/login', validate(loginValidation), catchAsync(async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   const user = await AuthService.findUserByEmail(email);
 
   if (!user || !user.isActive) {
-    return res.status(401).json({ error: 'Email ou senha estão incorretas' });
+    return res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: ERROR_MESSAGES.INVALID_CREDENTIALS });
   }
 
   const isPasswordValid = await AuthService.verifyPassword(password, user.password);
 
   if (!isPasswordValid) {
-    return res.status(401).json({ error: "Email ou senha estão incorretas" });
+    return res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: ERROR_MESSAGES.INVALID_CREDENTIALS });
   }
 
   if (!user.isApproved) {
-    return res.status(401).json({ error: 'Sua solicitação ainda não foi aprovada. Aguarde a aprovação do professor.' });
+    return res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: ERROR_MESSAGES.USER_NOT_APPROVED });
   }
 
   const token = AuthService.generateToken({
@@ -37,7 +38,7 @@ router.post('/login', validate(loginValidation), catchAsync(async (req: Request,
   });
 
   res.json({
-    message: 'Login realizado com sucesso',
+    message: SUCCESS_MESSAGES.LOGIN_SUCCESS,
     token,
     user: {
       id: user.id,
@@ -52,7 +53,6 @@ router.post('/login', validate(loginValidation), catchAsync(async (req: Request,
   });
 }));
 
-// Registro
 router.post('/register', validate(registerValidation), catchAsync(async (req: Request, res: Response) => {
   const { name, email, password, role, churchId } = req.body;
 
@@ -62,21 +62,21 @@ router.post('/register', validate(registerValidation), catchAsync(async (req: Re
   });
 
   if (!church || !church.isActive) {
-    return res.status(400).json({ error: 'Igreja inválida' });
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: ERROR_MESSAGES.INVALID_CHURCH });
   }
 
   // Verificar se já existe um Encarregado nesta igreja
-  if (role === UserRole.ENCARREGADO) {
+  if (role === USER_ROLES.ENCARREGADO) {
     const existingEnc = await prisma.user.findFirst({
       where: {
-        role: UserRole.ENCARREGADO,
+        role: USER_ROLES.ENCARREGADO,
         churchId: churchId,
         isActive: true,
       },
     });
 
     if (existingEnc) {
-      return res.status(409).json({ error: 'Já existe um Encarregado nesta igreja' });
+      return res.status(HTTP_STATUS.CONFLICT).json({ error: ERROR_MESSAGES.ENCARREGADO_EXISTS });
     }
   }
 
@@ -84,14 +84,14 @@ router.post('/register', validate(registerValidation), catchAsync(async (req: Re
   const existingUser = await AuthService.findUserByEmail(email);
 
   if (existingUser) {
-    return res.status(409).json({ error: 'Email já cadastrado' });
+    return res.status(HTTP_STATUS.CONFLICT).json({ error: ERROR_MESSAGES.EMAIL_ALREADY_EXISTS });
   }
 
   const user = await AuthService.createUser({
     name,
     email,
     password,
-    role: role || UserRole.APRENDIZ,
+    role: role || USER_ROLES.APRENDIZ,
     churchId: undefined,
     isApproved: false,
     phase: "1",
@@ -99,7 +99,7 @@ router.post('/register', validate(registerValidation), catchAsync(async (req: Re
 
   // Encontrar professor da igreja
   const professor = await prisma.user.findFirst({
-    where: { role: UserRole.ENCARREGADO, churchId: churchId },
+    where: { role: USER_ROLES.ENCARREGADO, churchId: churchId },
   });
 
   // Criar solicitação de entrada
@@ -108,28 +108,28 @@ router.post('/register', validate(registerValidation), catchAsync(async (req: Re
       userId: user.id,
       churchId,
       professorId: professor?.id,
+      status: REQUEST_STATUS.EM_ANALISE,
     },
   });
 
-  res.status(201).json({
-    message: 'Sua solicitação foi enviada com sucesso! Aguarde a aprovação.',
+  res.status(HTTP_STATUS.CREATED).json({
+    message: SUCCESS_MESSAGES.REGISTER_SUCCESS,
     user,
   });
 }));
 
-// Verificar token
 router.get('/verify', async (req: Request, res: Response) => {
   try {
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
-      return res.status(401).json({ error: 'Token não fornecido' });
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: ERROR_MESSAGES.TOKEN_NOT_PROVIDED });
     }
 
     const token = authHeader.split(' ')[1];
 
     if (!token) {
-      return res.status(401).json({ error: 'Token malformado' });
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: ERROR_MESSAGES.INVALID_TOKEN });
     }
 
     const decoded = AuthService.verifyToken(token);
@@ -137,7 +137,7 @@ router.get('/verify', async (req: Request, res: Response) => {
     const user = await AuthService.findUserById(decoded.id);
 
     if (!user || !user.isActive) {
-      return res.status(401).json({ error: 'Usuário inválido' });
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: ERROR_MESSAGES.USER_NOT_FOUND });
     }
 
     res.json({
@@ -151,7 +151,13 @@ router.get('/verify', async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    res.status(401).json({ error: 'Token inválido' });
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: ERROR_MESSAGES.INVALID_TOKEN });
+    }
+    if (error instanceof jwt.TokenExpiredError) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: ERROR_MESSAGES.TOKEN_EXPIRED });
+    }
+    return res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: ERROR_MESSAGES.INVALID_TOKEN });
   }
 });
 
