@@ -4,6 +4,7 @@ let currentUser = null;
 let churches = [];
 let logs = [];
 let logFilters = { level: "", context: "" };
+let currentUserStatusFilter = "active"; // "active" or "inactive"
 
 function showToast(message, type = "success") {
   const toast = document.getElementById("toast");
@@ -216,9 +217,12 @@ function formatUptime(seconds) {
   return parts.join(" ");
 }
 
-async function loadUsers() {
+async function loadUsers(statusFilter = currentUserStatusFilter) {
   try {
-    const response = await fetch(`${API_BASE}/users`, {
+    const params = new URLSearchParams();
+    params.append('active', statusFilter === 'active' ? 'true' : 'false');
+
+    const response = await fetch(`${API_BASE}/users?${params}`, {
       headers: getAuthHeaders(),
     });
     const data = await response.json();
@@ -238,6 +242,18 @@ function renderUsersTable(users) {
   const tbody = document.getElementById("usersTableBody");
   tbody.innerHTML = "";
 
+  if (users.length === 0) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-secondary);">
+        <i class="fas fa-users" style="font-size: 48px; margin-bottom: 16px; display: block;"></i>
+        Nenhum usuário encontrado nesta categoria
+      </td>
+    `;
+    tbody.appendChild(tr);
+    return;
+  }
+
   users.forEach((user) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -255,10 +271,21 @@ function renderUsersTable(users) {
                     }')">
                         <i class="fas fa-edit"></i> Editar
                     </button>
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" onclick="toggleDropdown('${user.id}')">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <div id="dropdown-${user.id}" class="dropdown-menu">
+                            <button onclick="toggleUserStatus('${user.id}', ${user.isActive})">
+                                <i class="fas fa-${user.isActive ? 'user-times' : 'user-check'}"></i>
+                                ${user.isActive ? 'Desativar' : 'Ativar'} Usuário
+                            </button>
+                        </div>
+                    </div>
                     <button class="btn btn-danger" onclick="deleteUser('${
                       user.id
                     }')">
-                        <i class="fas fa-trash"></i>
+                        <i class="fas fa-trash"></i> Excluir
                     </button>
                 </div>
             </td>
@@ -424,13 +451,15 @@ async function editUser(userId) {
 
     const modal = document.getElementById("userModal");
     const title = document.getElementById("userModalTitle");
+    const passwordField = document.getElementById("userPassword");
 
     title.textContent = "Editar Usuário";
 
     document.getElementById("userId").value = data.user.id;
     document.getElementById("name").value = data.user.name;
     document.getElementById("userEmail").value = data.user.email;
-    document.getElementById("userPassword").value = "";
+    passwordField.value = "";
+    passwordField.required = false; // Make password optional for edits
     document.getElementById("userRole").value = data.user.role;
 
     setTimeout(() => {
@@ -468,6 +497,62 @@ async function deleteUser(userId) {
     console.error("Erro:", error);
     showToast("Erro ao excluir usuário", "error");
   }
+}
+
+function switchUserStatusTab(status) {
+  // Update current filter
+  currentUserStatusFilter = status;
+
+  // Update tab active states
+  document.querySelectorAll('.status-tab').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  document.querySelector(`[data-status="${status}"]`).classList.add('active');
+
+  // Load users for the selected status
+  loadUsers(status);
+}
+
+function toggleDropdown(userId) {
+  // Close all other dropdowns first
+  document.querySelectorAll('.dropdown-menu').forEach(menu => {
+    if (menu.id !== `dropdown-${userId}`) {
+      menu.classList.remove('show');
+    }
+  });
+
+  // Toggle the clicked dropdown
+  const dropdown = document.getElementById(`dropdown-${userId}`);
+  dropdown.classList.toggle('show');
+}
+
+async function toggleUserStatus(userId, currentStatus) {
+  const action = currentStatus ? 'desativar' : 'ativar';
+  if (!confirm(`Tem certeza que deseja ${action} este usuário?`)) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/users/${userId}/toggle-status`, {
+      method: "PATCH",
+      headers: getAuthHeaders(),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      showToast(data.message, "success");
+      loadUsers();
+    } else {
+      const data = await response.json();
+      showToast(data.error || "Erro ao alterar status do usuário", "error");
+    }
+  } catch (error) {
+    console.error("Erro:", error);
+    showToast("Erro ao alterar status do usuário", "error");
+  }
+
+  // Close the dropdown
+  document.getElementById(`dropdown-${userId}`).classList.remove('show');
 }
 
 async function loadChurches() {
@@ -875,6 +960,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       .getElementById("userRole")
       .addEventListener("change", togglePhaseField);
 
+    // User status tab event listeners
+    document.querySelectorAll('.status-tab').forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        const status = e.currentTarget.dataset.status;
+        switchUserStatusTab(status);
+      });
+    });
+
     document
       .getElementById("logLevelFilter")
       .addEventListener("change", (e) => {
@@ -906,6 +999,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.addEventListener("click", (event) => {
       if (event.target.classList.contains("modal")) {
         event.target.style.display = "none";
+      }
+
+      // Close dropdowns when clicking outside
+      if (!event.target.closest('.dropdown')) {
+        document.querySelectorAll('.dropdown-menu').forEach(menu => {
+          menu.classList.remove('show');
+        });
       }
     });
   } else {

@@ -10,8 +10,8 @@
 <body id="adminPage">
     <div class="admin-container">
         <aside class="sidebar">
-            <div class="logo">
-                <i class="fas fa-church"></i>
+            <div class="logo" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                <img src="assets/ccb-logo.png" alt="MSA Logo" style="height: 40px; width: auto;">
                 <span>MSA Admin</span>
             </div>
             
@@ -126,6 +126,16 @@
                             </button>
                         </div>
                         <div class="card-body">
+                            <!-- User Status Tabs -->
+                            <div class="user-status-tabs">
+                                <button class="status-tab active" data-status="active">
+                                    <i class="fas fa-user-check"></i> Usuários Ativos
+                                </button>
+                                <button class="status-tab" data-status="inactive">
+                                    <i class="fas fa-user-times"></i> Usuários Inativos
+                                </button>
+                            </div>
+
                             <div class="table-container">
                                 <table class="data-table">
                                     <thead>

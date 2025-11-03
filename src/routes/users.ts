@@ -47,8 +47,15 @@ router.get('/:id', auth, async (req: AuthRequest, res: Response) => {
 // Routes
 router.get('/', auth, async (req: Request, res: Response) => {
     try {
-        const { churchId, role, take } = req.query;
-        const where: any = { isActive: true };
+        const { churchId, role, take, active } = req.query;
+        const where: any = {};
+
+        // If active parameter is provided, filter by it; otherwise default to active users
+        if (active !== undefined) {
+            where.isActive = active === 'true';
+        } else {
+            where.isActive = true; // Default to active users for backward compatibility
+        }
 
          if (churchId) where.churchId = churchId;
          if (role) where.role = role;
@@ -63,6 +70,7 @@ router.get('/', auth, async (req: Request, res: Response) => {
              email: true,
              role: true,
              avatar: true,
+             isActive: true,
              churchId: true,
              phase: true,
              church: {
@@ -101,7 +109,7 @@ router.put("/:id", auth, async (req: AuthRequest, res: Response) => {
 
     if (name !== undefined) updateData.name = name;
     if (email !== undefined) updateData.email = email;
-    if (password !== undefined)
+    if (password !== undefined && password.trim() !== "")
       updateData.password = await AuthService.hashPassword(password);
 
     if (role) {
@@ -153,15 +161,56 @@ router.delete('/:id', auth, async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
 
-        await prisma.user.update({
+        await prisma.user.delete({
             where: { id },
-            data: { isActive: false },
         });
 
-        res.json({ message: "Usuário desativado com sucesso" });
+        res.json({ message: "Usuário excluído com sucesso" });
     } catch (error) {
         console.log("Erro ao deletar usuário:", error);
         res.status(500).json({ error: "Erro ao deletar usuário" });
+    }
+});
+
+// Alternar status ativo/inativo do usuário
+router.patch('/:id/toggle-status', auth, async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+
+        // Primeiro, buscar o usuário atual para saber o status
+        const currentUser = await prisma.user.findUnique({
+            where: { id },
+            select: { isActive: true },
+        });
+
+        if (!currentUser) {
+            return res.status(404).json({ error: "Usuário não encontrado" });
+        }
+
+        // Alternar o status
+        const newStatus = !currentUser.isActive;
+
+        const user = await prisma.user.update({
+            where: { id },
+            data: { isActive: newStatus },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                isActive: true,
+                churchId: true,
+                phase: true,
+            },
+        });
+
+        res.json({
+            user,
+            message: `Usuário ${newStatus ? 'ativado' : 'desativado'} com sucesso`
+        });
+    } catch (error) {
+        console.log("Erro ao alternar status do usuário:", error);
+        res.status(500).json({ error: "Erro ao alternar status do usuário" });
     }
 });
 
