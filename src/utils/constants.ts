@@ -78,7 +78,7 @@ export const ERROR_MESSAGES = {
   TOKEN_EXPIRED: 'Token expirado',
   USER_NOT_APPROVED: 'Sua solicitação ainda não foi aprovada. Aguarde a aprovação do professor.',
   USER_NOT_FOUND: 'Usuário não encontrado',
-  EMAIL_ALREADY_EXISTS: 'Email já cadastrado',
+  EMAIL_ALREADY_EXISTS: 'Este email já está sendo usado. Tente fazer login ou use outro email.',
 
   // Authorization
   ACCESS_DENIED: 'Acesso negado',
