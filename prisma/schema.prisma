@@ -69,9 +69,9 @@ model EntryRequest {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  user      User   @relation("UserEntryRequests", fields: [userId], references: [id])
-  church    Church @relation(fields: [churchId], references: [id])
-  professor User?  @relation("ApprovedEntryRequests", fields: [professorId], references: [id])
+  user      User    @relation("UserEntryRequests", fields: [userId], references: [id], onDelete: Cascade)
+  church    Church  @relation(fields: [churchId], references: [id])
+  professor User?   @relation("ApprovedEntryRequests", fields: [professorId], references: [id], onDelete: Cascade)
 
   // Indexes
   @@index([status])
