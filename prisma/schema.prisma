@@ -18,6 +18,7 @@ model User {
   isActive  Boolean  @default(true)
   phase     String   @default("1")
   isApproved Boolean @default(false)
+  status    UserStatus @default(PENDING)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -92,6 +93,12 @@ enum UserRole {
   APRENDIZ
 }
 
+enum UserStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REMOVED
+}
 
 enum RequestStatus {
   EM_ANALISE

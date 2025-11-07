@@ -61,6 +61,14 @@ export const createUserValidation = Joi.object({
     .default('1')
     .messages({
       'any.only': 'Fase deve ser um valor entre 1 e 5'
+    }),
+
+  status: Joi.string()
+    .valid('PENDING', 'APPROVED', 'REJECTED', 'REMOVED')
+    .optional()
+    .default('PENDING')
+    .messages({
+      'any.only': 'Status deve ser PENDING, APPROVED, REJECTED ou REMOVED'
     })
 });
 
@@ -100,11 +108,15 @@ export const updateUserValidation = Joi.object({
       'any.only': 'Função deve ser ADMINISTRADOR, INSTRUTOR, ENCARREGADO ou APRENDIZ'
     }),
 
-  churchId: Joi.string()
-    .uuid()
+  churchId: Joi.alternatives()
+    .try(
+      Joi.string().uuid(),
+      Joi.allow(null)
+    )
     .optional()
     .messages({
-      'string.uuid': 'ID da igreja deve ser válido'
+      'string.uuid': 'ID da igreja deve ser válido',
+      'alternatives.match': 'ID da igreja deve ser válido ou null'
     }),
 
   phase: Joi.string()
@@ -112,6 +124,13 @@ export const updateUserValidation = Joi.object({
     .optional()
     .messages({
       'any.only': 'Fase deve ser um valor entre 1 e 5'
+    }),
+
+  status: Joi.string()
+    .valid('PENDING', 'APPROVED', 'REJECTED', 'REMOVED')
+    .optional()
+    .messages({
+      'any.only': 'Status deve ser PENDING, APPROVED, REJECTED ou REMOVED'
     })
 });
 

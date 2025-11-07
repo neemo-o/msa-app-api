@@ -87,6 +87,7 @@ export class AuthService {
         churchId: true,
         phase: true,
         isApproved: true,
+        status: true,
         isActive: true,
         createdAt: true,
         church: {

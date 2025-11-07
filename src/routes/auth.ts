@@ -77,6 +77,37 @@ router.post('/login', validate(loginValidation), catchAsync(async (req: Request,
     return res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: ERROR_MESSAGES.USER_NOT_APPROVED });
   }
 
+  // Verificações específicas para APRENDIZ
+  if (user.role === USER_ROLES.APRENDIZ) {
+    // Verificar se tem igreja
+    if (!user.churchId) {
+      return res.status(HTTP_STATUS.FORBIDDEN).json({
+        error: 'Você precisa estar vinculado a uma igreja para acessar o sistema.'
+      });
+    }
+
+    // Verificar status que impedem login
+    if (user.status === 'PENDING' || user.status === 'REJECTED' || user.status === 'REMOVED') {
+      const statusMessages = {
+        PENDING: 'Sua conta ainda está em análise. Aguarde a aprovação.',
+        REJECTED: 'Sua conta foi rejeitada. Entre em contato com a administração.',
+        REMOVED: 'Sua conta foi removida da igreja. Você pode tentar se cadastrar novamente.'
+      };
+      return res.status(HTTP_STATUS.FORBIDDEN).json({
+        error: statusMessages[user.status as keyof typeof statusMessages]
+      });
+    }
+  } else {
+    // Para outros roles, manter verificações existentes
+    if (user.status === 'REJECTED' || user.status === 'REMOVED') {
+      return res.status(HTTP_STATUS.FORBIDDEN).json({
+        error: user.status === 'REJECTED'
+          ? 'Sua conta foi rejeitada. Entre em contato com a administração.'
+          : 'Sua conta foi removida da igreja. Você pode tentar se cadastrar novamente.'
+      });
+    }
+  }
+
   const token = AuthService.generateToken({
     id: user.id,
     email: user.email,
@@ -92,6 +123,7 @@ router.post('/login', validate(loginValidation), catchAsync(async (req: Request,
       email: user.email,
       role: user.role,
       avatar: user.avatar,
+      churchId: user.churchId,
       church: user.church,
       phase: user.phase,
       isApproved: user.isApproved,
@@ -167,7 +199,21 @@ const registerJSON = catchAsync(async (req: Request, res: Response) => {
   const existingUser = await AuthService.findUserByEmail(email);
 
   if (existingUser) {
-    return res.status(HTTP_STATUS.CONFLICT).json({ error: ERROR_MESSAGES.EMAIL_ALREADY_EXISTS });
+    // Se o usuário foi rejeitado, bloquear novo registro
+    if (existingUser.status === 'REJECTED') {
+      return res.status(HTTP_STATUS.CONFLICT).json({
+        error: 'Sua conta foi rejeitada. Entre em contato com a administração.'
+      });
+    }
+
+    // Se o usuário foi removido, permitir novo registro (criar nova conta)
+    if (existingUser.status === 'REMOVED') {
+      // Usuários removidos podem se registrar novamente
+      // Não bloqueamos aqui - eles podem criar uma nova conta
+    } else {
+      // Para outros status (APPROVED, PENDING), bloquear
+      return res.status(HTTP_STATUS.CONFLICT).json({ error: ERROR_MESSAGES.EMAIL_ALREADY_EXISTS });
+    }
   }
 
   const user = await AuthService.createUser({
@@ -277,7 +323,21 @@ const registerWithAvatar = [
     const existingUser = await AuthService.findUserByEmail(email);
 
     if (existingUser) {
-      return res.status(HTTP_STATUS.CONFLICT).json({ error: ERROR_MESSAGES.EMAIL_ALREADY_EXISTS });
+      // Se o usuário foi rejeitado, bloquear novo registro
+      if (existingUser.status === 'REJECTED') {
+        return res.status(HTTP_STATUS.CONFLICT).json({
+          error: 'Sua conta foi rejeitada. Entre em contato com a administração.'
+        });
+      }
+
+      // Se o usuário foi removido, permitir novo registro (criar nova conta)
+      if (existingUser.status === 'REMOVED') {
+        // Usuários removidos podem se registrar novamente
+        // Não bloqueamos aqui - eles podem criar uma nova conta
+      } else {
+        // Para outros status (APPROVED, PENDING), bloquear
+        return res.status(HTTP_STATUS.CONFLICT).json({ error: ERROR_MESSAGES.EMAIL_ALREADY_EXISTS });
+      }
     }
 
     // Handle avatar upload
@@ -367,6 +427,37 @@ router.get('/verify', async (req: Request, res: Response) => {
 
     if (!user || !user.isActive) {
       return res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: ERROR_MESSAGES.USER_NOT_FOUND });
+    }
+
+    // Verificações específicas para APRENDIZ
+    if (user.role === USER_ROLES.APRENDIZ) {
+      // Verificar se tem igreja
+      if (!user.churchId) {
+        return res.status(HTTP_STATUS.FORBIDDEN).json({
+          error: 'Você precisa estar vinculado a uma igreja para acessar o sistema.'
+        });
+      }
+
+      // Verificar status que impedem login
+      if (user.status === 'PENDING' || user.status === 'REJECTED' || user.status === 'REMOVED') {
+        const statusMessages = {
+          PENDING: 'Sua conta ainda está em análise. Aguarde a aprovação.',
+          REJECTED: 'Sua conta foi rejeitada. Entre em contato com a administração.',
+          REMOVED: 'Sua conta foi removida da igreja. Você pode tentar se cadastrar novamente.'
+        };
+        return res.status(HTTP_STATUS.FORBIDDEN).json({
+          error: statusMessages[user.status as keyof typeof statusMessages]
+        });
+      }
+    } else {
+      // Para outros roles, manter verificações existentes
+      if (user.status === 'REJECTED' || user.status === 'REMOVED') {
+        return res.status(HTTP_STATUS.FORBIDDEN).json({
+          error: user.status === 'REJECTED'
+            ? 'Sua conta foi rejeitada. Entre em contato com a administração.'
+            : 'Sua conta foi removida da igreja. Você pode tentar se cadastrar novamente.'
+        });
+      }
     }
 
     res.json({

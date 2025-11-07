@@ -49,7 +49,7 @@ router.get('/:id', auth, catchAsync(async (req: AuthRequest, res: Response) => {
 }));
 
 router.get('/', auth, catchAsync(async (req: Request, res: Response) => {
-    const { churchId, role, take, active } = req.query;
+    const { churchId, role, take, active, approved } = req.query;
     const where: any = {};
 
     // If active parameter is provided, filter by it; otherwise default to active users
@@ -57,6 +57,11 @@ router.get('/', auth, catchAsync(async (req: Request, res: Response) => {
         where.isActive = active === 'true';
     } else {
         where.isActive = true; // Default to active users for backward compatibility
+    }
+
+    // Filter by approved status if specified
+    if (approved !== undefined) {
+        where.isApproved = approved === 'true';
     }
 
     if (churchId) where.churchId = churchId;
@@ -96,7 +101,7 @@ router.get('/', auth, catchAsync(async (req: Request, res: Response) => {
 
 router.put("/:id", auth, validate(updateUserValidation), catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const { name, email, password, role, churchId, phase } = req.body;
+  const { name, email, password, role, churchId, phase, status } = req.body;
 
   const updateData: any = {};
 
@@ -122,6 +127,14 @@ router.put("/:id", auth, validate(updateUserValidation), catchAsync(async (req: 
     updateData.phase = phase;
   }
 
+  if (status !== undefined) {
+    const validStatuses = ['PENDING', 'APPROVED', 'REJECTED', 'REMOVED'];
+    if (!validStatuses.includes(status)) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'Status inválido' });
+    }
+    updateData.status = status;
+  }
+
   const user = await prisma.user.update({
     where: { id },
     data: updateData,
@@ -132,6 +145,7 @@ router.put("/:id", auth, validate(updateUserValidation), catchAsync(async (req: 
       role: true,
       phase: true,
       churchId: true,
+      status: true,
     },
   });
 

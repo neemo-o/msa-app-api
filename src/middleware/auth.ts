@@ -31,6 +31,15 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
       return res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: ERROR_MESSAGES.USER_NOT_FOUND });
     }
 
+    // Verificar se o usuário tem status que impede login
+    if (user.status === 'REJECTED' || user.status === 'REMOVED') {
+      return res.status(HTTP_STATUS.FORBIDDEN).json({
+        error: user.status === 'REJECTED'
+          ? 'Sua conta foi rejeitada. Entre em contato com a administração.'
+          : 'Sua conta foi removida da igreja. Você pode tentar se cadastrar novamente.'
+      });
+    }
+
     (req as AuthRequest).user = user;
     next();
   } catch (error) {

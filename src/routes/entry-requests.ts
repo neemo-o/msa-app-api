@@ -103,6 +103,7 @@ router.post("/:id/approve", requireEntryRequestAccess, async (req: AuthRequest, 
     // Atualizar usuário
     const userUpdateData: any = {
       isApproved: true,
+      status: "APPROVED",
       churchId: request.churchId,
     };
 
@@ -125,6 +126,52 @@ router.post("/:id/approve", requireEntryRequestAccess, async (req: AuthRequest, 
     });
   } catch (error) {
     console.error("Erro ao aprovar solicitação:", error);
+    res.status(500).json({ error: "Erro interno do servidor" });
+  }
+});
+
+// POST /api/entry-requests/:id/reject - Rejeitar solicitação
+router.post("/:id/reject", requireEntryRequestAccess, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const user = req.user!;
+
+    const request = await prisma.entryRequest.findUnique({
+      where: { id },
+      include: { church: true, user: true },
+    });
+
+    if (!request) {
+      return res.status(404).json({ error: "Solicitação não encontrada" });
+    }
+
+    // Verificar permissões
+    if (user.role === UserRole.ENCARREGADO && request.churchId !== user.churchId) {
+      return res.status(403).json({ error: "Acesso negado a esta solicitação" });
+    }
+
+    // Rejeitar solicitação
+    await prisma.entryRequest.update({
+      where: { id },
+      data: { status: "REJEITADO" },
+    });
+
+    // Atualizar status do usuário para REJECTED
+    await prisma.user.update({
+      where: { id: request.userId },
+      data: { status: "REJECTED" },
+    });
+
+    res.json({
+      message: "Solicitação rejeitada com sucesso",
+      request: {
+        id: request.id,
+        user: request.user.name,
+        church: request.church?.name
+      }
+    });
+  } catch (error) {
+    console.error("Erro ao rejeitar solicitação:", error);
     res.status(500).json({ error: "Erro interno do servidor" });
   }
 });
