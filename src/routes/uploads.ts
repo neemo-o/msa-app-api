@@ -79,4 +79,16 @@ router.get('/avatars/:filename', (req: Request, res: Response) => {
   });
 });
 
+// Get activity files
+router.get('/activities/:filename', (req: Request, res: Response) => {
+  const { filename } = req.params;
+  const filePath = path.join(__dirname, '../../uploads/activities', filename);
+
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      res.status(404).json({ error: 'Arquivo não encontrado' });
+    }
+  });
+});
+
 export default router;

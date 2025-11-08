@@ -20,6 +20,7 @@ import uploadRoutes from "./routes/uploads";
 import docsRoutes from "./routes/docs";
 import logsRoutes from "./routes/logs";
 import entryRequestRoutes from "./routes/entry-requests";
+import activityRoutes from "./routes/activities";
 
 // Configuration
 dotenv.config();
@@ -155,6 +156,7 @@ app.use("/api/uploads", uploadRoutes);
 app.use("/api/docs", docsRoutes);
 app.use("/api/logs", logsRoutes);
 app.use("/api/entry-requests", authMiddleware, entryRequestRoutes);
+app.use("/api/activities", activityRoutes);
 
 // Rota de teste sem middleware
 app.get("/api/test", (req, res) => {

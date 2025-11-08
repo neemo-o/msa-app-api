@@ -9,101 +9,120 @@ async function main() {
   const defaultPassword = "123456";
   const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
-  console.log(`\nCriando Igreja Padrão...`);
+  console.log(`\nCriando Igreja...`);
 
-  const igrejaA = await prisma.church.create({
+  const igrejaPrincipal = await prisma.church.create({
     data: {
-      name: "Igreja A",
-      description: "Igreja padrão do sistema",
-      address: "Rua Principal, 100 - Centro",
-      email: "igrejaa@exemplo.com",
+      name: "Igreja Central",
+      description: "Igreja principal do sistema",
+      address: "Rua Central, 123 - Centro",
+      phone: "(11) 99999-9999",
+      email: "contato@igrejacentral.com",
     },
   });
 
-  console.log(`✅ Igreja criada: ${igrejaA.name}`);
+  console.log(`✅ Igreja criada: ${igrejaPrincipal.name}`);
 
-  console.log(`\nCriando Usuários Padrão...`);
+  console.log(`\nCriando Usuários...`);
 
-  const admin = await prisma.user.upsert({
-    where: { email: "admin@example.com" },
-    update: {},
-    create: {
-      email: "admin@example.com",
-      name: "Admin",
-      password: hashedPassword,
-      role: "ADMINISTRADOR",
-      isApproved: true,
-      status: "APPROVED",
-      churchId: null,
-    },
-  });
+  // 4 Administradores
+  const admins = [];
+  for (let i = 1; i <= 4; i++) {
+    const admin = await prisma.user.upsert({
+      where: { email: `admin${i}@example.com` },
+      update: {},
+      create: {
+        email: `admin${i}@example.com`,
+        name: `Administrador ${i}`,
+        password: hashedPassword,
+        role: "ADMINISTRADOR",
+        isApproved: true,
+        status: "APPROVED",
+        churchId: null,
+      },
+    });
+    admins.push(admin);
+  }
 
-  const aprendiz = await prisma.user.upsert({
-    where: { email: "aprendiz@example.com" },
-    update: {},
-    create: {
-      email: "aprendiz@example.com",
-      name: "Aprendiz",
-      password: hashedPassword,
-      role: "APRENDIZ",
-      isApproved: true,
-      status: "APPROVED",
-      phase: "1",
-      churchId: igrejaA.id,
-    },
-  });
+  // 4 Instrutores
+  const instrutores = [];
+  for (let i = 1; i <= 4; i++) {
+    const instrutor = await prisma.user.upsert({
+      where: { email: `instrutor${i}@example.com` },
+      update: {},
+      create: {
+        email: `instrutor${i}@example.com`,
+        name: `Instrutor ${i}`,
+        password: hashedPassword,
+        role: "INSTRUTOR",
+        isApproved: true,
+        status: "APPROVED",
+        phase: `${i}`,
+        churchId: igrejaPrincipal.id,
+      },
+    });
+    instrutores.push(instrutor);
+  }
 
-  const instrutor = await prisma.user.upsert({
-    where: { email: "instrutor@example.com" },
-    update: {},
-    create: {
-      email: "instrutor@example.com",
-      name: "Instrutor",
-      password: hashedPassword,
-      role: "INSTRUTOR",
-      isApproved: true,
-      status: "APPROVED",
-      phase: "2",
-      churchId: igrejaA.id,
-    },
-  });
+  // 4 Encarregados
+  const encarregados = [];
+  for (let i = 1; i <= 4; i++) {
+    const encarregado = await prisma.user.upsert({
+      where: { email: `encarregado${i}@example.com` },
+      update: {},
+      create: {
+        email: `encarregado${i}@example.com`,
+        name: `Encarregado ${i}`,
+        password: hashedPassword,
+        role: "ENCARREGADO",
+        isApproved: true,
+        status: "APPROVED",
+        phase: `${i + 4}`,
+        churchId: igrejaPrincipal.id,
+      },
+    });
+    encarregados.push(encarregado);
+  }
 
-  const encarregado = await prisma.user.upsert({
-    where: { email: "encarregado@example.com" },
-    update: {},
-    create: {
-      email: "encarregado@example.com",
-      name: "Encarregado",
-      password: hashedPassword,
-      role: "ENCARREGADO",
-      isApproved: true,
-      status: "APPROVED",
-      phase: "3",
-      churchId: igrejaA.id,
-    },
-  });
+  // 4 Aprendizes
+  const aprendizes = [];
+  for (let i = 1; i <= 4; i++) {
+    const aprendiz = await prisma.user.upsert({
+      where: { email: `aprendiz${i}@example.com` },
+      update: {},
+      create: {
+        email: `aprendiz${i}@example.com`,
+        name: `Aprendiz ${i}`,
+        password: hashedPassword,
+        role: "APRENDIZ",
+        isApproved: true,
+        status: "APPROVED",
+        phase: `${i}`,
+        churchId: igrejaPrincipal.id,
+      },
+    });
+    aprendizes.push(aprendiz);
+  }
 
   console.log(`✅ Usuários criados:`);
-  console.log(`   - ${admin.email} (${admin.role}) - Sem igreja`);
-  console.log(`   - ${aprendiz.email} (${aprendiz.role}) - Igreja A`);
-  console.log(`   - ${instrutor.email} (${instrutor.role}) - Igreja A`);
-  console.log(`   - ${encarregado.email} (${encarregado.role}) - Igreja A`);
+  console.log(`   📊 Administradores: ${admins.length}`);
+  admins.forEach(admin => console.log(`      - ${admin.email} (${admin.role})`));
 
-  console.log(`\nCriando Solicitações de Entrada de Teste...`);
+  console.log(`   👨‍🏫 Instrutores: ${instrutores.length}`);
+  instrutores.forEach(instrutor => console.log(`      - ${instrutor.email} (${instrutor.role}) - Fase ${instrutor.phase}`));
 
-  // Criar uma solicitação de entrada pendente
-  const entryRequest = await prisma.entryRequest.create({
-    data: {
-      userId: aprendiz.id,
-      churchId: igrejaA.id,
-      professorId: encarregado.id,
-      status: "EM_ANALISE",
-    },
-  });
+  console.log(`   👨‍💼 Encarregados: ${encarregados.length}`);
+  encarregados.forEach(encarregado => console.log(`      - ${encarregado.email} (${encarregado.role}) - Fase ${encarregado.phase}`));
 
-  console.log(`✅ Solicitação de entrada criada para: ${aprendiz.name} (${aprendiz.email})`);
+  console.log(`   👨‍🎓 Aprendizes: ${aprendizes.length}`);
+  aprendizes.forEach(aprendiz => console.log(`      - ${aprendiz.email} (${aprendiz.role}) - Fase ${aprendiz.phase}`));
+
+  console.log(`\n📝 Senha padrão para todos os usuários: ${defaultPassword}`);
 
   console.log(`\n🎉 Seed finalizado com sucesso!`);
+  console.log(`   🏛️  1 Igreja criada`);
+  console.log(`   👥 ${admins.length + instrutores.length + encarregados.length + aprendizes.length} usuários criados`);
+  console.log(`   ✅ Todos os usuários estão aprovados e ativos`);
 }
 
 main()
