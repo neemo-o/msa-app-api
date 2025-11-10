@@ -1,5 +1,6 @@
-import { PrismaClient, ActivityType, UserRole } from '@prisma/client';
+import { PrismaClient, ActivityType, UserRole, SubmissionStatus } from '@prisma/client';
 import { AuthRequest } from '../types';
+import { NotificationService } from './notificationService';
 
 const prisma = new PrismaClient();
 
@@ -39,6 +40,77 @@ export class ActivityService {
         }
       }
     });
+
+    return activity;
+  }
+
+  // Atualizar atividade (apenas ENCARREGADO autor)
+  static async updateActivity(id: string, data: {
+    title?: string;
+    description?: string;
+    questions?: { text: string; options: string[]; correct: string }[];
+    dueDate?: Date;
+  }, authorId: string) {
+    // Verificar se a atividade existe e se o usuário é o autor
+    const existingActivity = await prisma.activity.findUnique({
+      where: { id },
+      include: {
+        submissions: {
+          select: { studentId: true, student: { select: { id: true } } }
+        }
+      }
+    });
+
+    if (!existingActivity) {
+      throw new Error('Atividade não encontrada');
+    }
+
+    if (existingActivity.authorId !== authorId) {
+      throw new Error('Apenas o autor pode editar esta atividade');
+    }
+
+    // Atualizar atividade
+    const activity = await prisma.activity.update({
+      where: { id },
+      data: {
+        title: data.title,
+        description: data.description,
+        dueDate: data.dueDate,
+        isEdited: true,
+        questions: data.questions ? {
+          deleteMany: {}, // Remove todas as perguntas existentes
+          create: data.questions.map(q => ({
+            text: q.text,
+            options: q.options,
+            correct: q.correct
+          }))
+        } : undefined
+      },
+      include: {
+        phases: true,
+        questions: true,
+        author: {
+          select: { id: true, name: true, email: true }
+        }
+      }
+    });
+
+    // Marcar todas as submissões como RETURNED
+    await prisma.submission.updateMany({
+      where: { activityId: id },
+      data: { status: SubmissionStatus.RETURNED }
+    });
+
+    // Enviar notificações push para todos os alunos que têm submissões
+    const studentIds = existingActivity.submissions.map(sub => sub.studentId);
+    if (studentIds.length > 0) {
+      await NotificationService.sendPushNotifications(
+        studentIds,
+        'Atividade Atualizada',
+        `A atividade "${activity.title}" foi atualizada. Refazer é necessário.`,
+        'activity_update'
+      );
+    }
 
     return activity;
   }
@@ -192,6 +264,7 @@ export class ActivityService {
       data: {
         score: data.score,
         feedback: data.feedback,
+        status: SubmissionStatus.GRADED,
         gradedById: graderId,
         updatedAt: new Date()
       },
@@ -207,6 +280,14 @@ export class ActivityService {
         }
       }
     });
+
+    // Enviar notificação push para o aluno
+    await NotificationService.sendPushNotification(
+      submission.student.id,
+      'Submissão Corrigida',
+      `Sua atividade "${submission.activity.title}" foi corrigida. Nota: ${data.score}/10.`,
+      'submission_graded'
+    );
 
     return submission;
   }

@@ -133,6 +133,30 @@ router.get('/:id', catchAsync(async (req: AuthRequest, res: Response) => {
   res.json({ activity });
 }));
 
+// PUT /api/activities/:id - Atualizar atividade (ENcarregado autor)
+router.put('/:id', requireRole([UserRole.ENCARREGADO]), catchAsync(async (req: AuthRequest, res: Response) => {
+  const { title, description, questions, dueDate } = req.body;
+
+  // Validações básicas
+  if (!title) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({
+      error: 'Campo obrigatório: title'
+    });
+  }
+
+  const activity = await ActivityService.updateActivity(req.params.id, {
+    title,
+    description,
+    questions,
+    dueDate: dueDate ? new Date(dueDate) : undefined
+  }, req.user!.id);
+
+  res.json({
+    message: 'Atividade atualizada com sucesso',
+    activity
+  });
+}));
+
 // POST /api/activities/:id/submissions - Enviar submissão (Aprendiz)
 router.post('/:id/submissions', requireRole([UserRole.APRENDIZ]), uploadActivityFiles, catchAsync(async (req: AuthRequest, res: Response) => {
   const { answerText, answers } = req.body;

@@ -21,6 +21,7 @@ import docsRoutes from "./routes/docs";
 import logsRoutes from "./routes/logs";
 import entryRequestRoutes from "./routes/entry-requests";
 import activityRoutes from "./routes/activities";
+import notificationRoutes from "./routes/notifications";
 
 // Configuration
 dotenv.config();
@@ -157,6 +158,7 @@ app.use("/api/docs", docsRoutes);
 app.use("/api/logs", logsRoutes);
 app.use("/api/entry-requests", authMiddleware, entryRequestRoutes);
 app.use("/api/activities", activityRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Rota de teste sem middleware
 app.get("/api/test", (req, res) => {

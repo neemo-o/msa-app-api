@@ -96,6 +96,7 @@ model Activity {
   author       User           @relation("ActivityAuthor", fields: [authorId], references: [id])
   createdAt    DateTime       @default(now())
   dueDate      DateTime?
+  isEdited     Boolean        @default(false)
   phases       ActivityPhase[]
   questions    Question[]
   submissions  Submission[]
@@ -118,20 +119,21 @@ model Question {
 }
 
 model Submission {
-  id          String    @id @default(cuid())
+  id          String           @id @default(cuid())
   studentId   String
   activityId  String
-  type        String    // "QUIZ" | "PDF" | "TEXTO"
+  type        String           // "QUIZ" | "PDF" | "TEXTO"
   answerText  String?
-  files       String[]  @default([])
+  files       String[]         @default([])
   score       Float?
   feedback    String?
+  status      SubmissionStatus @default(PENDING)
   gradedById  String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  student     User      @relation("StudentSubmissions", fields: [studentId], references: [id])
-  activity    Activity  @relation(fields: [activityId], references: [id])
-  gradedBy    User?     @relation("Grader", fields: [gradedById], references: [id])
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  student     User             @relation("StudentSubmissions", fields: [studentId], references: [id])
+  activity    Activity         @relation(fields: [activityId], references: [id])
+  gradedBy    User?            @relation("Grader", fields: [gradedById], references: [id])
 }
 
 
@@ -160,4 +162,10 @@ enum ActivityType {
   QUIZ
   PDF
   TEXTO
+}
+
+enum SubmissionStatus {
+  PENDING
+  GRADED
+  RETURNED
 }
