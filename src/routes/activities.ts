@@ -263,4 +263,11 @@ router.get('/submissions/:activityId', requireRole([UserRole.INSTRUTOR, UserRole
   res.json({ submissions });
 }));
 
+// DELETE /api/activities/:id - Deletar atividade (ENcarregado autor)
+router.delete('/:id', requireRole([UserRole.ENCARREGADO]), catchAsync(async (req: AuthRequest, res: Response) => {
+  const result = await ActivityService.deleteActivity(req.params.id, req.user!.id);
+
+  res.json(result);
+}));
+
 export default router;

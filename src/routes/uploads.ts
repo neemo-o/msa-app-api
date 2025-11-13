@@ -84,9 +84,16 @@ router.get('/activities/:filename', (req: Request, res: Response) => {
   const { filename } = req.params;
   const filePath = path.join(__dirname, '../../uploads/activities', filename);
 
+  // Check if file exists before sending
+  if (!require('fs').existsSync(filePath)) {
+    return res.status(404).json({ error: 'Arquivo não encontrado' });
+  }
+
+  // Set headers and send file
   res.sendFile(filePath, (err) => {
-    if (err) {
-      res.status(404).json({ error: 'Arquivo não encontrado' });
+    if (err && !res.headersSent) {
+      console.error('Erro ao enviar arquivo:', err);
+      res.status(500).json({ error: 'Erro interno do servidor' });
     }
   });
 });

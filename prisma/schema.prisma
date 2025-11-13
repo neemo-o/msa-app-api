@@ -55,6 +55,7 @@ model Church {
   // Relations
   users         User[]
   entryRequests EntryRequest[]
+  activities    Activity[]
 
   // Indexes
   @@index([isActive])
@@ -93,7 +94,9 @@ model Activity {
   description  String?
   type         ActivityType   // QUIZ | PDF | TEXTO
   authorId     String
+  churchId     String
   author       User           @relation("ActivityAuthor", fields: [authorId], references: [id])
+  church       Church         @relation(fields: [churchId], references: [id])
   createdAt    DateTime       @default(now())
   dueDate      DateTime?
   isEdited     Boolean        @default(false)

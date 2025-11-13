@@ -14,12 +14,23 @@ export class ActivityService {
     questions?: { text: string; options: string[]; correct: string }[];
     dueDate?: Date;
   }, authorId: string) {
+    // Buscar o churchId do autor
+    const author = await prisma.user.findUnique({
+      where: { id: authorId },
+      select: { churchId: true }
+    });
+
+    if (!author?.churchId) {
+      throw new Error('Usuário não está vinculado a uma igreja');
+    }
+
     const activity = await prisma.activity.create({
       data: {
         title: data.title,
         description: data.description,
         type: data.type,
         authorId,
+        churchId: author.churchId,
         dueDate: data.dueDate,
         phases: {
           create: data.phases.map(phase => ({ phaseNumber: phase }))
@@ -37,6 +48,9 @@ export class ActivityService {
         questions: true,
         author: {
           select: { id: true, name: true, email: true }
+        },
+        church: {
+          select: { id: true, name: true }
         }
       }
     });
@@ -122,18 +136,24 @@ export class ActivityService {
     const where: any = {};
 
     if (user.role === UserRole.APRENDIZ) {
-      // Filtrar por fase do aluno
+      // Filtrar por fase do aluno e mesma igreja
       const userPhase = parseInt(user.phase || '1');
       where.phases = {
         some: {
           phaseNumber: userPhase
         }
       };
+      where.churchId = user.churchId; // Filtrar por igreja do aluno
     } else if (user.role === UserRole.ENCARREGADO) {
       // ENCARREGADO vê apenas suas atividades
       where.authorId = user.id;
+    } else if (user.role === UserRole.INSTRUTOR) {
+      // INSTRUTOR vê apenas atividades da mesma igreja que têm pelo menos 1 submissão
+      where.churchId = user.churchId; // Filtrar por igreja do instrutor
+      where.submissions = {
+        some: {} // Pelo menos uma submissão existe
+      };
     }
-    // INSTRUTOR vê todas as atividades (para correção)
 
     const activities = await prisma.activity.findMany({
       where,
@@ -141,10 +161,15 @@ export class ActivityService {
         phases: true,
         questions: true,
         author: {
-          select: { id: true, name: true, email: true }
+          select: { id: true, name: true, email: true, churchId: true }
         },
         submissions: user.role === UserRole.APRENDIZ ? {
-          where: { studentId: user.id }
+          where: { studentId: user.id },
+          include: {
+            gradedBy: {
+              select: { id: true, name: true, email: true }
+            }
+          }
         } : true
       },
       orderBy: { createdAt: 'desc' }
@@ -166,8 +191,22 @@ export class ActivityService {
           select: { id: true, name: true, email: true }
         },
         submissions: user.role === UserRole.APRENDIZ ? {
-          where: { studentId: user.id }
-        } : true
+          where: { studentId: user.id },
+          include: {
+            gradedBy: {
+              select: { id: true, name: true, email: true }
+            }
+          }
+        } : {
+          include: {
+            student: {
+              select: { id: true, name: true, email: true, phase: true }
+            },
+            gradedBy: {
+              select: { id: true, name: true, email: true }
+            }
+          }
+        }
       }
     });
 
@@ -175,7 +214,12 @@ export class ActivityService {
       throw new Error('Atividade não encontrada');
     }
 
-    // Verificar permissões
+    // Verificar permissões por igreja
+    if (user.churchId && activity.churchId !== user.churchId) {
+      throw new Error('Você não tem permissão para acessar esta atividade');
+    }
+
+    // Verificar permissões adicionais
     if (user.role === UserRole.APRENDIZ) {
       const userPhase = parseInt(user.phase || '1');
       const hasAccess = activity.phases.some(phase => phase.phaseNumber === userPhase);
@@ -204,7 +248,19 @@ export class ActivityService {
     });
 
     if (existingSubmission) {
-      throw new Error('Você já enviou uma resposta para esta atividade');
+      // Se a submissão já foi corrigida, não permitir re-envio
+      if (existingSubmission.status === SubmissionStatus.GRADED) {
+        throw new Error('Esta atividade já foi corrigida e não pode ser reenviada');
+      }
+      // Se está retornada (RETURNED), permitir re-envio
+      if (existingSubmission.status === SubmissionStatus.RETURNED) {
+        // Remover a submissão anterior para permitir re-envio
+        await prisma.submission.delete({
+          where: { id: existingSubmission.id }
+        });
+      } else {
+        throw new Error('Você já enviou uma resposta para esta atividade');
+      }
     }
 
     // Para quizzes, processar respostas
@@ -242,7 +298,9 @@ export class ActivityService {
         type: data.type,
         answerText,
         files: data.files || [],
-        score: quizScore
+        score: quizScore,
+        status: data.type === 'QUIZ' && quizScore !== undefined ? SubmissionStatus.GRADED : SubmissionStatus.PENDING,
+        gradedById: data.type === 'QUIZ' && quizScore !== undefined ? null : undefined // null para correção automática
       },
       include: {
         student: {
@@ -250,7 +308,8 @@ export class ActivityService {
         },
         activity: {
           select: { id: true, title: true, type: true }
-        }
+        },
+        gradedBy: true
       }
     });
 
@@ -301,6 +360,20 @@ export class ActivityService {
       throw new Error('Acesso negado');
     }
 
+    // Verificar se a atividade pertence à mesma igreja do usuário
+    const activity = await prisma.activity.findUnique({
+      where: { id: activityId },
+      select: { churchId: true }
+    });
+
+    if (!activity) {
+      throw new Error('Atividade não encontrada');
+    }
+
+    if (user.churchId && activity.churchId !== user.churchId) {
+      throw new Error('Você não tem permissão para acessar esta atividade');
+    }
+
     const submissions = await prisma.submission.findMany({
       where: { activityId },
       include: {
@@ -317,6 +390,39 @@ export class ActivityService {
     return submissions;
   }
 
+  // Deletar atividade (apenas ENCARREGADO autor)
+  static async deleteActivity(id: string, authorId: string) {
+    // Verificar se a atividade existe e se o usuário é o autor
+    const activity = await prisma.activity.findUnique({
+      where: { id },
+      include: {
+        submissions: {
+          select: { id: true }
+        }
+      }
+    });
+
+    if (!activity) {
+      throw new Error('Atividade não encontrada');
+    }
+
+    if (activity.authorId !== authorId) {
+      throw new Error('Apenas o autor pode excluir esta atividade');
+    }
+
+    // Verificar se há submissões
+    if (activity.submissions.length > 0) {
+      throw new Error('Não é possível excluir uma atividade que possui submissões');
+    }
+
+    // Deletar atividade (as fases e questões serão deletadas automaticamente devido ao cascade)
+    await prisma.activity.delete({
+      where: { id }
+    });
+
+    return { message: 'Atividade excluída com sucesso' };
+  }
+
   // Verificar se usuário pode acessar atividade
   static async canAccessActivity(activityId: string, user: AuthRequest['user']): Promise<boolean> {
     if (!user) return false;
@@ -328,6 +434,11 @@ export class ActivityService {
     });
 
     if (!activity) return false;
+
+    // Verificar se atividade pertence à mesma igreja
+    if (user.churchId && activity.churchId !== user.churchId) {
+      return false;
+    }
 
     const userPhase = parseInt(user.phase || '1');
     return activity.phases.some(phase => phase.phaseNumber === userPhase);
