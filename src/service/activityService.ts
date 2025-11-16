@@ -1,6 +1,8 @@
 import { PrismaClient, ActivityType, UserRole, SubmissionStatus } from '@prisma/client';
 import { AuthRequest } from '../types';
 import { NotificationService } from './notificationService';
+import fs from 'fs/promises';
+import path from 'path';
 
 const prisma = new PrismaClient();
 
@@ -109,11 +111,54 @@ export class ActivityService {
       }
     });
 
-    // Marcar todas as submissões como RETURNED
+    // Marcar todas as submissões como RETURNED e limpar dados de correção antigos
     await prisma.submission.updateMany({
       where: { activityId: id },
-      data: { status: SubmissionStatus.RETURNED }
+      data: {
+        status: SubmissionStatus.RETURNED,
+        score: null, // Limpar scores antigos
+        feedback: null, // Limpar feedback antigos
+        gradedById: null // Limpar referência ao corretor antigo
+      }
     });
+
+    // Limpar arquivos das submissões
+    try {
+      // Buscar todas as submissões da atividade
+      const allSubmissions = await prisma.submission.findMany({
+        where: { activityId: id },
+        select: { id: true, files: true }
+      });
+
+      // Filtrar apenas as que têm arquivos
+      const submissionsWithFiles = allSubmissions.filter(sub => sub.files.length > 0);
+
+      // Deletar arquivos do sistema de arquivos
+      for (const submission of submissionsWithFiles) {
+        for (const filePath of submission.files) {
+          try {
+            // Converter path virtual para path físico (ex: /uploads/activities/filename -> server/uploads/activities/filename)
+            const filename = path.basename(filePath); // Extrair apenas o nome do arquivo
+            const physicalPath = path.join(__dirname, '../../uploads/activities', filename);
+            await fs.unlink(physicalPath);
+          } catch (error) {
+            // Log do erro mas não impedir a continuação
+            console.warn(`Não foi possível deletar arquivo: ${filePath}`, error);
+          }
+        }
+      }
+
+      // Limpar arrays de arquivos no banco de dados
+      if (submissionsWithFiles.length > 0) {
+        await prisma.submission.updateMany({
+          where: { activityId: id },
+          data: { files: [] }
+        });
+      }
+    } catch (error) {
+      // Log do erro mas não impedir a edição da atividade
+      console.error('Erro durante limpeza de arquivos:', error);
+    }
 
     // Enviar notificações push para todos os alunos que têm submissões
     const studentIds = existingActivity.submissions.map(sub => sub.studentId);
@@ -148,10 +193,13 @@ export class ActivityService {
       // ENCARREGADO vê apenas suas atividades
       where.authorId = user.id;
     } else if (user.role === UserRole.INSTRUTOR) {
-      // INSTRUTOR vê apenas atividades da mesma igreja que têm pelo menos 1 submissão
+      // INSTRUTOR vê apenas atividades da mesma igreja que têm pelo menos 1 submissão E não são QUIZ
       where.churchId = user.churchId; // Filtrar por igreja do instrutor
       where.submissions = {
         some: {} // Pelo menos uma submissão existe
+      };
+      where.NOT = {
+        type: ActivityType.QUIZ // Excluir atividades do tipo QUIZ
       };
     }
 
