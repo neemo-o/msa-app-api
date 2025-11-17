@@ -1,0 +1,824 @@
+{
+  "phases": [
+    {
+      "id": "1",
+      "title": "Fase 1: Fundamentos da Música",
+      "description": "Conceitos básicos: música, som, elementos, notas, pentagrama e claves.",
+      "topics": [
+        {
+          "id": "1-1",
+          "title": "Música",
+          "resources": [
+            {
+              "id": "1-1-1",
+              "type": "video",
+              "title": "O que é música? (teoria musical básica)",
+              "url": "https://www.youtube.com/watch?v=7Z5n2VbT7qs"
+            }
+          ]
+        },
+        {
+          "id": "1-2",
+          "title": "Som",
+          "resources": [
+            {
+              "id": "1-2-1",
+              "type": "video",
+              "title": "Propriedades do som: frequência, amplitude e timbre",
+              "url": "https://www.youtube.com/watch?v=JqMBek0jGv8"
+            }
+          ]
+        },
+        {
+          "id": "1-3",
+          "title": "Elementos da Música",
+          "resources": [
+            {
+              "id": "1-3-1",
+              "type": "video",
+              "title": "Melodia, harmonia e ritmo — fundamentos da teoria musical",
+              "url": "https://www.youtube.com/watch?v=rYDy9fh5g2A"
+            }
+          ]
+        },
+        {
+          "id": "1-4",
+          "title": "Propriedades do Som",
+          "resources": [
+            {
+              "id": "1-4-1",
+              "type": "video",
+              "title": "O que é timbre, intensidade, duração e altura?",
+              "url": "https://www.youtube.com/watch?v=ca9B5Z0CXrU"
+            }
+          ]
+        },
+        {
+          "id": "1-5",
+          "title": "Notas Musicais",
+          "resources": [
+            {
+              "id": "1-5-1",
+              "type": "video",
+              "title": "Notas musicais: Dó, Ré, Mi... explicadas",
+              "url": "https://www.youtube.com/watch?v=0GJx7n1HWBQ"
+            }
+          ]
+        },
+        {
+          "id": "1-6",
+          "title": "Pentagrama (Pauta)",
+          "resources": [
+            {
+              "id": "1-6-1",
+              "type": "video",
+              "title": "Como ler o pentagrama (pauta musical)",
+              "url": "https://www.youtube.com/watch?v=-86I6BfqAd0"
+            }
+          ]
+        },
+        {
+          "id": "1-7",
+          "title": "Claves",
+          "resources": [
+            {
+              "id": "1-7-1",
+              "type": "video",
+              "title": "Claves de Sol, Fá e Dó – teoria musical para iniciantes",
+              "url": "https://www.youtube.com/watch?v=VdT1O9i6T2A"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "title": "Fase 2: Figuras e Compassos",
+      "description": "Figuras sonoras e de silêncio, compasso, barras, fórmula, ritmo e pulsação.",
+      "topics": [
+        {
+          "id": "2-1",
+          "title": "Figuras Musicais",
+          "resources": [
+            {
+              "id": "2-1-1",
+              "type": "video",
+              "title": "Figuras musicais – semibreve, mínima, colcheia...",
+              "url": "https://www.youtube.com/watch?v=vkYKeSxrQZk"
+            }
+          ]
+        },
+        {
+          "id": "2-2",
+          "title": "Pausas",
+          "resources": [
+            {
+              "id": "2-2-1",
+              "type": "video",
+              "title": "Pausas musicais explicadas",
+              "url": "https://www.youtube.com/watch?v=1lzAuv5-Y-M"
+            }
+          ]
+        },
+        {
+          "id": "2-3",
+          "title": "Compasso",
+          "resources": [
+            {
+              "id": "2-3-1",
+              "type": "video",
+              "title": "O que é compasso na música? (teoria básica)",
+              "url": "https://www.youtube.com/watch?v=HywVp7zxo7M"
+            }
+          ]
+        },
+        {
+          "id": "2-4",
+          "title": "Barras de Compasso",
+          "resources": [
+            {
+              "id": "2-4-1",
+              "type": "video",
+              "title": "Barras de compasso e suas funções",
+              "url": "https://www.youtube.com/watch?v=8ITD3UbtPLc"
+            }
+          ]
+        },
+        {
+          "id": "2-5",
+          "title": "Fórmula de Compasso em 4",
+          "resources": [
+            {
+              "id": "2-5-1",
+              "type": "video",
+              "title": "Assinatura de tempo 4/4 explicada",
+              "url": "https://www.youtube.com/watch?v=Mj4Wg58FmS4"
+            }
+          ]
+        },
+        {
+          "id": "2-6",
+          "title": "Ritmo e Pulsação",
+          "resources": [
+            {
+              "id": "2-6-1",
+              "type": "video",
+              "title": "Ritmo vs. pulsação – entenda a diferença",
+              "url": "https://www.youtube.com/watch?v=lDGrGCGz6jo"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "title": "Fase 3: Endecagrama e Solfejo",
+      "description": "Endecagrama, leitura métrica/rítmica, solfejo e metrônomo.",
+      "topics": [
+        {
+          "id": "3-1",
+          "title": "Endecagrama",
+          "resources": [
+            {
+              "id": "3-1-1",
+              "type": "video",
+              "title": "Entendendo o endecagrama (11 linhas musicais)",
+              "url": "https://www.youtube.com/watch?v=gr66ySoqI2o"
+            }
+          ]
+        },
+        {
+          "id": "3-2",
+          "title": "Leitura Métrica e Rítmica",
+          "resources": [
+            {
+              "id": "3-2-1",
+              "type": "video",
+              "title": "Leitura métrica e rítmica: solfejo e precisão",
+              "url": "https://www.youtube.com/watch?v=ZXcN1e3Rp3o"
+            }
+          ]
+        },
+        {
+          "id": "3-3",
+          "title": "Movimento de Solfejo em 4",
+          "resources": [
+            {
+              "id": "3-3-1",
+              "type": "video",
+              "title": "Movimento de solfejo em 4 tempos – técnica de condução",
+              "url": "https://www.youtube.com/watch?v=P4kD2bOJx1Y"
+            }
+          ]
+        },
+        {
+          "id": "3-4",
+          "title": "Metrônomo",
+          "resources": [
+            {
+              "id": "3-4-1",
+              "type": "video",
+              "title": "Como usar o metrônomo de forma eficaz",
+              "url": "https://www.youtube.com/watch?v=AF4iAfDdc0A"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "title": "Fase 4: Ligadura, Ponto e Intervalos",
+      "description": "Ligadura de valor, ponto de aumento, intervalos e compassos 3 e 2 com solfejo.",
+      "topics": [
+        {
+          "id": "4-1",
+          "title": "Ligadura de Valor",
+          "resources": [
+            {
+              "id": "4-1-1",
+              "type": "video",
+              "title": "Ligadura de valor explicada (sustentação de notas)",
+              "url": "https://www.youtube.com/watch?v=J6ZhK6x7Kz8"
+            }
+          ]
+        },
+        {
+          "id": "4-2",
+          "title": "Ponto de Aumento",
+          "resources": [
+            {
+              "id": "4-2-1",
+              "type": "video",
+              "title": "Ponto de aumento na teoria musical",
+              "url": "https://www.youtube.com/watch?v=bj6JFmF30Qg"
+            }
+          ]
+        },
+        {
+          "id": "4-3",
+          "title": "Intervalos",
+          "resources": [
+            {
+              "id": "4-3-1",
+              "type": "video",
+              "title": "Intervalos musicais – guia completo",
+              "url": "https://www.youtube.com/watch?v=7KsFeoJEBhA"
+            }
+          ]
+        },
+        {
+          "id": "4-4",
+          "title": "Fórmula de Compasso em 3",
+          "resources": [
+            {
+              "id": "4-4-1",
+              "type": "video",
+              "title": "Assinatura de tempo 3/4 explicada",
+              "url": "https://www.youtube.com/watch?v=_Tn5iTtOQ08"
+            }
+          ]
+        },
+        {
+          "id": "4-5",
+          "title": "Solfejo em 3",
+          "resources": [
+            {
+              "id": "4-5-1",
+              "type": "video",
+              "title": "Movimento de solfejo para compasso ternário (3 tempos)",
+              "url": "https://www.youtube.com/watch?v=V-TZ7BhRjKk"
+            }
+          ]
+        },
+        {
+          "id": "4-6",
+          "title": "Fórmula de Compasso em 2",
+          "resources": [
+            {
+              "id": "4-6-1",
+              "type": "video",
+              "title": "Assinatura de tempo 2/4 explicada",
+              "url": "https://www.youtube.com/watch?v=W--N4Ti39Pg"
+            }
+          ]
+        },
+        {
+          "id": "4-7",
+          "title": "Solfejo em 2",
+          "resources": [
+            {
+              "id": "4-7-1",
+              "type": "video",
+              "title": "Movimento de solfejo para compasso binário (2 tempos)",
+              "url": "https://www.youtube.com/watch?v=tKy2VMeSp2A"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "5",
+      "title": "Fase 5: Tercinas, Fermata e Compasso 6",
+      "description": "Tercinas, fermata, fórmula de compasso em 6 e movimentos de solfejo em 6.",
+      "topics": [
+        {
+          "id": "5-1",
+          "title": "Tercinas",
+          "resources": [
+            {
+              "id": "5-1-1",
+              "type": "video",
+              "title": "Como funcionam as tercinas na música",
+              "url": "https://www.youtube.com/watch?v=COy3_rPJPmU"
+            }
+          ]
+        },
+        {
+          "id": "5-2",
+          "title": "Fermata",
+          "resources": [
+            {
+              "id": "5-2-1",
+              "type": "video",
+              "title": "Fermata: prolongamento de nota e pausa",
+              "url": "https://www.youtube.com/watch?v=w4C7k8zAyXY"
+            }
+          ]
+        },
+        {
+          "id": "5-3",
+          "title": "Fórmula de Compasso em 6",
+          "resources": [
+            {
+              "id": "5-3-1",
+              "type": "video",
+              "title": "Assinatura de tempo 6/4 e 6/8 explicadas",
+              "url": "https://www.youtube.com/watch?v=QdDnoNVW2hQ"
+            }
+          ]
+        },
+        {
+          "id": "5-4",
+          "title": "Solfejo em 6",
+          "resources": [
+            {
+              "id": "5-4-1",
+              "type": "video",
+              "title": "Movimento de solfejo para compasso de 6 tempos",
+              "url": "https://www.youtube.com/watch?v=9MXxM0TStx8"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "6",
+      "title": "Fase 6: Tons, Semitons e Escalas",
+      "description": "Tom, semitom, acidentes e escalas maiores com sustenidos e bemóis.",
+      "topics": [
+        {
+          "id": "6-1",
+          "title": "Tom e Semitom",
+          "resources": [
+            {
+              "id": "6-1-1",
+              "type": "video",
+              "title": "Tom e semitom explicados",
+              "url": "https://www.youtube.com/watch?v=vjIv4Gbmnj8"
+            }
+          ]
+        },
+        {
+          "id": "6-2",
+          "title": "Acidentes",
+          "resources": [
+            {
+              "id": "6-2-1",
+              "type": "video",
+              "title": "Sustenido, bemol e bequadro – acidentes musicais",
+              "url": "https://www.youtube.com/watch?v=uc_zMfj4fZ8"
+            }
+          ]
+        },
+        {
+          "id": "6-3",
+          "title": "Escalas Diatônicas (maiores)",
+          "resources": [
+            {
+              "id": "6-3-1",
+              "type": "video",
+              "title": "Escala diatônica maior: teoria e prática",
+              "url": "https://www.youtube.com/watch?v=Q7xYdJJvEZI"
+            }
+          ]
+        },
+        {
+          "id": "6-4",
+          "title": "Escalas Maiores com Sustenidos",
+          "resources": [
+            {
+              "id": "6-4-1",
+              "type": "video",
+              "title": "Escalas maiores com sustenidos – construção",
+              "url": "https://www.youtube.com/watch?v=8n0YlCjGdi0"
+            }
+          ]
+        },
+        {
+          "id": "6-5",
+          "title": "Escalas Maiores com Bemóis",
+          "resources": [
+            {
+              "id": "6-5-1",
+              "type": "video",
+              "title": "Escalas maiores com bemol – teoria musical",
+              "url": "https://www.youtube.com/watch?v=S0w9M7tOELk"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "7",
+      "title": "Fase 7: Armadura de Clave e Compassos Compostos",
+      "description": "Armadura, fórmula de compasso em 9 e 12, solfejo em 9/12 e movimentos alternativos.",
+      "topics": [
+        {
+          "id": "7-1",
+          "title": "Armadura de Clave",
+          "resources": [
+            {
+              "id": "7-1-1",
+              "type": "video",
+              "title": "Armaduras de clave: sustenidos e bemóis",
+              "url": "https://www.youtube.com/watch?v=9fFfV9xXY9M"
+            }
+          ]
+        },
+        {
+          "id": "7-2",
+          "title": "Fórmula de Compasso em 9",
+          "resources": [
+            {
+              "id": "7-2-1",
+              "type": "video",
+              "title": "Assinatura de tempo 9/8 explicada",
+              "url": "https://www.youtube.com/watch?v=Drs_uqFG-to"
+            }
+          ]
+        },
+        {
+          "id": "7-3",
+          "title": "Movimento de Solfejo em 9",
+          "resources": [
+            {
+              "id": "7-3-1",
+              "type": "video",
+              "title": "Solfejo em ritmo de 9 tempos (9/8)",
+              "url": "https://www.youtube.com/watch?v=2j-TMs-2wj8"
+            }
+          ]
+        },
+        {
+          "id": "7-4",
+          "title": "Movimento Alternativo para Solfejo em 9",
+          "resources": [
+            {
+              "id": "7-4-1",
+              "type": "video",
+              "title": "Marcações alternativas para 9/8 no solfejo",
+              "url": "https://www.youtube.com/watch?v=KOTZquNeXJI"
+            }
+          ]
+        },
+        {
+          "id": "7-5",
+          "title": "Fórmula de Compasso em 12",
+          "resources": [
+            {
+              "id": "7-5-1",
+              "type": "video",
+              "title": "Assinatura de tempo 12/8 e 12/4",
+              "url": "https://www.youtube.com/watch?v=a-7GTx0pvlw"
+            }
+          ]
+        },
+        {
+          "id": "7-6",
+          "title": "Movimento de Solfejo em 12",
+          "resources": [
+            {
+              "id": "7-6-1",
+              "type": "video",
+              "title": "Solfejo em 12 tempos (12/8)",
+              "url": "https://www.youtube.com/watch?v=0T9vCbnUTLA"
+            }
+          ]
+        },
+        {
+          "id": "7-7",
+          "title": "Movimento Alternativo para Solfejo em 12",
+          "resources": [
+            {
+              "id": "7-7-1",
+              "type": "video",
+              "title": "Marcações alternativas para 12/8 no solfejo",
+              "url": "https://www.youtube.com/watch?v=JzLuiXbsKE8"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "8",
+      "title": "Fase 8: Tonalidade e Acidentes",
+      "description": "Tonalidade, acidentes ocorrentes e acidentes de precaução.",
+      "topics": [
+        {
+          "id": "8-1",
+          "title": "Tonalidade",
+          "resources": [
+            {
+              "id": "8-1-1",
+              "type": "video",
+              "title": "Tonalidade musical: o que é e como identificar",
+              "url": "https://www.youtube.com/watch?v=7yA17s1su8k"
+            }
+          ]
+        },
+        {
+          "id": "8-2",
+          "title": "Acidentes Ocorrentes",
+          "resources": [
+            {
+              "id": "8-2-1",
+              "type": "video",
+              "title": "Acidentes musicais (♯, ♭) e como funcionam",
+              "url": "https://www.youtube.com/watch?v=uc_zMfj4fZ8"
+            }
+          ]
+        },
+        {
+          "id": "8-3",
+          "title": "Acidentes de Precaução",
+          "resources": [
+            {
+              "id": "8-3-1",
+              "type": "video",
+              "title": "Acidente de precaução (notas alteradas que são revertidas)",
+              "url": "https://www.youtube.com/watch?v=fO8IG8z6W0k"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "9",
+      "title": "Fase 9: Repetição e Casas de Ritornello",
+      "description": "Barras de repetição e estrutura de ritornello.",
+      "topics": [
+        {
+          "id": "9-1",
+          "title": "Barra de Compasso – Repetição / Casa de Ritornello",
+          "resources": [
+            {
+              "id": "9-1-1",
+              "type": "video",
+              "title": "Repetição na partitura: barras e casas de ritornello",
+              "url": "https://www.youtube.com/watch?v=m9QnepxnMNU"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "10",
+      "title": "Fase 10: Dinâmica",
+      "description": "Indicações de intensidade sonora e expressividade.",
+      "topics": [
+        {
+          "id": "10-1",
+          "title": "Dinâmica",
+          "resources": [
+            {
+              "id": "10-1-1",
+              "type": "video",
+              "title": "Dinâmica musical: forte, piano, crescendo, decrescendo",
+              "url": "https://www.youtube.com/watch?v=7v3kTNdU6Gc"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "11",
+      "title": "Fase 11: Acento Métrico e Compassos",
+      "description": "Acento métrico, compassos simples, compostos e alternados.",
+      "topics": [
+        {
+          "id": "11-1",
+          "title": "Acento Métrico",
+          "resources": [
+            {
+              "id": "11-1-1",
+              "type": "video",
+              "title": "Acento métrico e como senti-lo",
+              "url": "https://www.youtube.com/watch?v=AGc6PjdRrRo"
+            }
+          ]
+        },
+        {
+          "id": "11-2",
+          "title": "Compassos Simples",
+          "resources": [
+            {
+              "id": "11-2-1",
+              "type": "video",
+              "title": "Compassos simples: 2/4, 3/4, 4/4",
+              "url": "https://www.youtube.com/watch?v=tGJtWuhwR4U"
+            }
+          ]
+        },
+        {
+          "id": "11-3",
+          "title": "Compassos Compostos",
+          "resources": [
+            {
+              "id": "11-3-1",
+              "type": "video",
+              "title": "Compassos compostos explicados (6/8, 9/8, 12/8 …)",
+              "url": "https://www.youtube.com/watch?v=fGaVQ7m12nw"
+            }
+          ]
+        },
+        {
+          "id": "11-4",
+          "title": "Compassos Alternados",
+          "resources": [
+            {
+              "id": "11-4-1",
+              "type": "video",
+              "title": "Compassos alternados na música: o que são e como usar",
+              "url": "https://www.youtube.com/watch?v=CIPaX48Rcl0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "12",
+      "title": "Fase 12: Síncopa e Contratempo",
+      "description": "Ritmos deslocados: síncopa e contratempo.",
+      "topics": [
+        {
+          "id": "12-1",
+          "title": "Síncopa",
+          "resources": [
+            {
+              "id": "12-1-1",
+              "type": "video",
+              "title": "O que é síncopa na música?",
+              "url": "https://www.youtube.com/watch?v=Vlbdu78FFhE"
+            }
+          ]
+        },
+        {
+          "id": "12-2",
+          "title": "Contratempo",
+          "resources": [
+            {
+              "id": "12-2-1",
+              "type": "video",
+              "title": "Contratempo musical explicado",
+              "url": "https://www.youtube.com/watch?v=vIU2G9dNfiI"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "13",
+      "title": "Fase 13: Ritmos Iniciais",
+      "description": "Tipos de ritmo inicial: tético, anacrúsico e acéfalo.",
+      "topics": [
+        {
+          "id": "13-1",
+          "title": "Ritmo Tético, Anacrúsico e Acéfalo",
+          "resources": [
+            {
+              "id": "13-1-1",
+              "type": "video",
+              "title": "Ritmo inicial: tético, anacrúsico e acéfalo",
+              "url": "https://www.youtube.com/watch?v=CVO2bGRItVk"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "14",
+      "title": "Fase 14: Notas Pontuadas",
+      "description": "Notas pontuadas e suas variações na subdivisão rítmica.",
+      "topics": [
+        {
+          "id": "14-1",
+          "title": "Notas Pontuadas",
+          "resources": [
+            {
+              "id": "14-1-1",
+              "type": "video",
+              "title": "Notas pontuadas: teoria e exemplos",
+              "url": "https://www.youtube.com/watch?v=l8p6h7xqUCo"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "15",
+      "title": "Fase 15: Andamento e Alterações",
+      "description": "Andamento, modificação de andamento e modificação indevida.",
+      "topics": [
+        {
+          "id": "15-1",
+          "title": "Andamento",
+          "resources": [
+            {
+              "id": "15-1-1",
+              "type": "video",
+              "title": "Andamento musical: BPM e marcações",
+              "url": "https://www.youtube.com/watch?v=6zPb2t-b4dY"
+            }
+          ]
+        },
+        {
+          "id": "15-2",
+          "title": "Modificação de Andamento (poco rallentando)",
+          "resources": [
+            {
+              "id": "15-2-1",
+              "type": "video",
+              "title": "Poco rallentando – significado musical",
+              "url": "https://www.youtube.com/watch?v=utgPDyPjeXc"
+            }
+          ]
+        },
+        {
+          "id": "15-3",
+          "title": "Modificação Indevida de Andamento",
+          "resources": [
+            {
+              "id": "15-3-1",
+              "type": "video",
+              "title": "Erro de andamento: o que é modificação indevida",
+              "url": "https://www.youtube.com/watch?v=JMVQgWcj9S4"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "16",
+      "title": "Fase 16: Frases, Interpretação e Indicações",
+      "description": "Frases musicais, interpretação musical e indicações interpretativas.",
+      "topics": [
+        {
+          "id": "16-1",
+          "title": "Frases e Semifrases",
+          "resources": [
+            {
+              "id": "16-1-1",
+              "type": "video",
+              "title": "Frase musical: como construir frases e semifrases",
+              "url": "https://www.youtube.com/watch?v=dRFTZd38q6k"
+            }
+          ]
+        },
+        {
+          "id": "16-2",
+          "title": "Interpretação Musical",
+          "resources": [
+            {
+              "id": "16-2-1",
+              "type": "video",
+              "title": "Expressão e interpretação na música",
+              "url": "https://www.youtube.com/watch?v=sCxZB3VxXg8"
+            }
+          ]
+        },
+        {
+          "id": "16-3",
+          "title": "Indicações Interpretativas",
+          "resources": [
+            {
+              "id": "16-3-1",
+              "type": "video",
+              "title": "Diretrizes interpretativas: solene, majesto-, júbilo etc.",
+              "url": "https://www.youtube.com/watch?v=OgtEblYkYPA"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

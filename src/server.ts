@@ -22,6 +22,7 @@ import logsRoutes from "./routes/logs";
 import entryRequestRoutes from "./routes/entry-requests";
 import activityRoutes from "./routes/activities";
 import notificationRoutes from "./routes/notifications";
+import contentRoutes from "./routes/content";
 
 // Configuration
 dotenv.config();
@@ -141,9 +142,23 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Rate limiting específico para auth (mais restritivo)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 5, // Máximo 5 tentativas por janela
+  message: {
+    error: 'Muitas tentativas de login. Tente novamente em 15 minutos.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true, // Não conta tentativas bem-sucedidas
+});
+
 // Apply rate limiting to API routes
 app.set("trust proxy", 1);
 app.use('/api/', limiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
 
 // Servir arquivos estáticos
 app.use(express.static('public'));
@@ -159,6 +174,7 @@ app.use("/api/logs", logsRoutes);
 app.use("/api/entry-requests", authMiddleware, entryRequestRoutes);
 app.use("/api/activities", activityRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/content", authMiddleware, contentRoutes);
 
 // Rota de teste sem middleware
 app.get("/api/test", (req, res) => {

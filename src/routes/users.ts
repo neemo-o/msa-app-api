@@ -1,5 +1,7 @@
 // Imports
 import { Router, Request, Response } from "express";
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { authMiddleware as auth } from "../middleware/auth";
 import { AuthRequest } from "../types";
 import { PrismaClient, UserRole } from "@prisma/client";
@@ -14,6 +16,29 @@ import {
   HTTP_STATUS,
   PAGINATION_DEFAULTS
 } from '../utils/constants';
+
+// Content data types
+interface Phase {
+  id: string;
+  title: string;
+  description: string;
+  topics: Topic[];
+}
+
+interface Topic {
+  id: string;
+  title: string;
+  resources: Resource[];
+}
+
+interface Resource {
+  id: string;
+  type: string;
+  title: string;
+  url: string;
+}
+
+const CONTENT_DATA = JSON.parse(readFileSync(join(__dirname, '../data/content.json'), 'utf-8')) as { phases: Phase[] };
 
 // Configuration
 const prisma = new PrismaClient();
@@ -254,6 +279,137 @@ router.post('/', auth, validate(createUserValidation), catchAsync(async (req: Au
     });
 
     res.status(HTTP_STATUS.CREATED).json({ user, message: SUCCESS_MESSAGES.USER_CREATED });
+}));
+
+// Content progress routes
+router.get('/:id/progress', auth, catchAsync(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+
+  const user = await prisma.user.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      phase: true,
+    },
+  });
+
+  if (!user) {
+    return res.status(HTTP_STATUS.NOT_FOUND).json({ error: ERROR_MESSAGES.USER_NOT_FOUND });
+  }
+
+  const progressRecords = await prisma.contentProgress.findMany({
+    where: { userId: id },
+    orderBy: { phase: 'asc' },
+  });
+
+  // Ensure all phases have records, even with zero progress
+  const allPhases = CONTENT_DATA.phases;
+  const progress = allPhases.map(phase => {
+    const existing = progressRecords.find(p => p.phase === phase.id);
+    return {
+      phase: phase.id,
+      completedTopics: existing?.completedTopics || [],
+      totalTopics: phase.topics.length,
+      progress: existing?.progress || 0,
+    };
+  });
+
+  res.json({ progress });
+}));
+
+router.post('/:id/progress', auth, catchAsync(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const { phaseId, topicId, markCompleted } = req.body;
+
+  const user = await prisma.user.findUnique({
+    where: { id },
+    select: { id: true },
+  });
+
+  if (!user) {
+    return res.status(HTTP_STATUS.NOT_FOUND).json({ error: ERROR_MESSAGES.USER_NOT_FOUND });
+  }
+
+  // Find phase data
+  const phase = CONTENT_DATA.phases.find(p => p.id === phaseId);
+  if (!phase) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'Fase não encontrada' });
+  }
+
+  const topic = phase.topics.find(t => t.id === topicId);
+  if (!topic) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'Tópico não encontrado' });
+  }
+
+  // Get or create progress record
+  let progressRecord = await prisma.contentProgress.findUnique({
+    where: { userId_phase: { userId: id, phase: phaseId } },
+  });
+
+  if (!progressRecord) {
+    progressRecord = await prisma.contentProgress.create({
+      data: {
+        userId: id,
+        phase: phaseId,
+        totalTopics: phase.topics.length,
+      },
+    });
+  }
+
+  let completedTopics = [...progressRecord.completedTopics];
+
+  if (markCompleted && !completedTopics.includes(topicId)) {
+    completedTopics.push(topicId);
+  } else if (!markCompleted) {
+    completedTopics = completedTopics.filter(t => t !== topicId);
+  }
+
+  // Always recalculate progress
+  const progress = completedTopics.length / progressRecord.totalTopics;
+
+  await prisma.contentProgress.update({
+    where: { userId_phase: { userId: id, phase: phaseId } },
+    data: {
+      completedTopics,
+      progress,
+    },
+  });
+
+  res.json({
+    success: true,
+    progress: {
+      phase: phaseId,
+      completedTopics,
+      totalTopics: progressRecord.totalTopics,
+      progress,
+    }
+  });
+}));
+
+// Analytics route
+router.post('/analytics/batch', auth, catchAsync(async (req: AuthRequest, res: Response) => {
+  const events = req.body.events as Array<{
+    eventType: string;
+    data?: any;
+  }>;
+
+  if (!Array.isArray(events) || events.length === 0) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'Events array required' });
+  }
+
+  const userId = req.user!.id;
+
+  const analyticsEvents = events.map(event => ({
+    userId,
+    eventType: event.eventType,
+    data: event.data || {},
+  }));
+
+  await prisma.analyticsEvent.createMany({
+    data: analyticsEvents,
+  });
+
+  res.json({ success: true, count: events.length });
 }));
 
 export default router;

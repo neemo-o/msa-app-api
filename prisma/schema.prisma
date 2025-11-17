@@ -29,6 +29,8 @@ model User {
   activitiesCreated Activity[]    @relation("ActivityAuthor")
   submissions       Submission[]  @relation("StudentSubmissions")
   gradedSubmissions Submission[]  @relation("Grader")
+  contentProgress   ContentProgress[]
+  analyticsEvents   AnalyticsEvent[]
 
   // Indexes
   @@index([role])
@@ -39,6 +41,45 @@ model User {
   @@index([email, isActive])
 
   @@map("users")
+}
+
+model ContentProgress {
+  id                String   @id @default(cuid())
+  userId            String
+  phase             String
+  completedTopics   String[] @default([])
+  totalTopics       Int      @default(0)
+  progress          Float    @default(0.0) // completedTopics.length / totalTopics
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@unique([userId, phase])
+  @@index([userId])
+  @@index([phase])
+
+  @@map("content_progress")
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  eventType String   // fase_aberta, topico_aberto, resource_aberto, topico_concluido, busca_realizada, fase_desbloqueada_app
+  data      Json?    // optional additional data
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@index([userId])
+  @@index([eventType])
+  @@index([createdAt])
+
+  @@map("analytics_events")
 }
 
 model Church {

@@ -54,6 +54,17 @@ export enum USER_PHASES {
   PHASE_3 = '3',
   PHASE_4 = '4',
   PHASE_5 = '5',
+  PHASE_6 = '6',
+  PHASE_7 = '7',
+  PHASE_8 = '8',
+  PHASE_9 = '9',
+  PHASE_10 = '10',
+  PHASE_11 = '11',
+  PHASE_12 = '12',
+  PHASE_13 = '13',
+  PHASE_14 = '14',
+  PHASE_15 = '15',
+  PHASE_16 = '16',
 }
 
 // HTTP Status Codes
@@ -96,7 +107,7 @@ export const ERROR_MESSAGES = {
   ENCARREGADO_EXISTS: 'Já existe um Encarregado nesta igreja',
   REQUEST_ALREADY_EXISTS: 'Já existe uma solicitação pendente para este usuário',
   INVALID_ROLE: 'Função deve ser ADMINISTRADOR, INSTRUTOR, ENCARREGADO ou APRENDIZ',
-  INVALID_PHASE: 'Fase deve ser um valor entre 1 e 5',
+  INVALID_PHASE: 'Fase deve ser um valor entre 1 e 16',
 
   // System
   INTERNAL_ERROR: 'Erro interno do servidor',
