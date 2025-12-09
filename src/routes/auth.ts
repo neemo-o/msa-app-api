@@ -67,6 +67,12 @@ router.post('/login', validate(loginValidation), catchAsync(async (req: Request,
     return res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: ERROR_MESSAGES.INVALID_CREDENTIALS });
   }
 
+  if (user.role === USER_ROLES.ADMINISTRADOR) {
+    return res.status(HTTP_STATUS.FORBIDDEN).json({
+      error: 'Administradores devem acessar apenas o painel administrativo.'
+    });
+  }
+
   const isPasswordValid = await AuthService.verifyPassword(password, user.password);
 
   if (!isPasswordValid) {

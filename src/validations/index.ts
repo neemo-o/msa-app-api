@@ -44,14 +44,14 @@ export const createUserValidation = Joi.object({
     }),
 
   churchId: Joi.string()
-    .uuid()
+    .pattern(/^c[a-z0-9]{24}$/)
     .when('role', {
       is: Joi.valid('ADMINISTRADOR'),
       then: Joi.optional(),
       otherwise: Joi.required()
     })
     .messages({
-      'string.uuid': 'ID da igreja deve ser válido',
+      'string.pattern.base': 'ID da igreja deve ser válido',
       'any.required': 'Igreja é obrigatória para este tipo de usuário'
     }),
 
@@ -110,12 +110,12 @@ export const updateUserValidation = Joi.object({
 
   churchId: Joi.alternatives()
     .try(
-      Joi.string().uuid(),
+      Joi.string().pattern(/^c[a-z0-9]{24}$/),
       Joi.allow(null)
     )
     .optional()
     .messages({
-      'string.uuid': 'ID da igreja deve ser válido',
+      'string.pattern.base': 'ID da igreja deve ser válido',
       'alternatives.match': 'ID da igreja deve ser válido ou null'
     }),
 
@@ -199,10 +199,10 @@ export const registerValidation = Joi.object({
     }),
 
   churchId: Joi.string()
-    .uuid()
+    .pattern(/^c[a-z0-9]{24}$/)
     .required()
     .messages({
-      'string.uuid': 'ID da igreja deve ser válido',
+      'string.pattern.base': 'ID da igreja deve ser válido',
       'string.empty': 'Igreja é obrigatória',
       'any.required': 'Igreja é obrigatória'
     })
